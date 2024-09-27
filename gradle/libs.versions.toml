@@ -1,5 +1,6 @@
 [versions]
 agp = "8.5.2"
+core = "12.1.1"
 kotlin = "1.9.0"
 coreKtx = "1.13.1"
 junit = "4.13.2"
@@ -9,10 +10,24 @@ lifecycleRuntimeKtx = "2.8.6"
 activityCompose = "1.9.2"
 composeBom = "2024.09.02"
 chaquopy = "15.0.1"
+ksp-version = "1.9.10-1.0.13"
+hilt-version = "2.51"
+material = "1.7.2"
+navigationCompose = "2.8.1"
+navigationComposeVersion = "2.6.0"
+ui = "1.7.2"
+webkit = "1.12.0"
+youtubeAndroidPlayerApi = "1.2.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-material = { module = "androidx.compose.material:material", version.ref = "material" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
+core = { module = "com.pierfrancescosoffritti.androidyoutubeplayer:core", version.ref = "core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt-version" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt-version" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
@@ -25,10 +40,13 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
-chaquopy = { module = "com.chaquo.python:chaquopy", version.ref = "chaquopy" }
+ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
+youtube-android-player-api = { module = "com.google.android.youtube:youtube-android-player-api", version.ref = "youtubeAndroidPlayerApi" }
 
 [plugins]
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-version" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 com-chaquo-python = { id = "com.chaquo.python", version.ref = "chaquopy" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt-version" }
 
