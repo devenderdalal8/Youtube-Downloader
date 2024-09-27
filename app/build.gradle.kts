@@ -78,6 +78,7 @@ chaquopy {
     defaultConfig {
         pip {
             install("pytubefix")
+            install("requests")
         }
     }
 }
