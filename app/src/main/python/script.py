@@ -1,19 +1,28 @@
 from pytubefix import YouTube, Playlist, Channel
-from pytubefix.cli import on_progress
+import requests
 import os
 import re
 
 class YouTubeDownloader:
     def __init__(self, url):
         self.url = url
-        self.yt = YouTube(url, on_progress_callback=on_progress)
+        self.yt = YouTube(url)
+
+    def download_with_progress(self, url, output_path, progress_callback=None):
+        response = requests.get(url, stream=True)
+        total_size = int(response.headers.get('content-length', 0))
+        with open(output_path, 'wb') as file:
+            for data in response.iter_content(chunk_size=1024):
+                file.write(data)
+                if progress_callback:
+                    progress_callback(file.tell(), total_size)
 
     def download_highest_resolution(self):
         try:
             ys = self.yt.streams.get_highest_resolution()
             safe_title = self.sanitize_filename(self.yt.title)
             download_path = os.path.join("/storage/emulated/0/Download/", f"{safe_title}.mp4")
-            ys.download(output_path=download_path)
+            self.download_with_progress(ys.url, download_path)
             return f"Downloaded: {download_path}"
         except Exception as e:
             return f"Error: {str(e)}"
@@ -23,7 +32,7 @@ class YouTubeDownloader:
             ys = self.yt.streams.get_audio_only()
             safe_title = self.sanitize_filename(self.yt.title)
             download_path = os.path.join("/storage/emulated/0/Download/", f"{safe_title}.mp3")
-            ys.download(output_path=download_path, mp3=mp3)
+            self.download_with_progress(ys.url, download_path)
             return f"Downloaded: {download_path}"
         except Exception as e:
             return f"Error: {str(e)}"
