@@ -92,13 +92,20 @@ chaquopy {
     }
 }
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.hilt.android)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation("androidx.media3:media3-exoplayer:1.4.1")
+    implementation("androidx.media3:media3-exoplayer-dash:1.4.1")
+    implementation("androidx.media3:media3-ui:1.4.1")
+    implementation("androidx.compose.material3:material3:1.0.0")
+    implementation("androidx.compose.material3:material3-window-size-class:1.0.0")
+    implementation("io.coil-kt:coil-compose:2.7.0")
     ksp(libs.hilt.compiler)
     implementation(libs.ui) // Adjust version as needed
     implementation(libs.androidx.material)
@@ -106,8 +113,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation (libs.androidx.webkit)
-    implementation (libs.core)
+    implementation(libs.androidx.webkit)
+    implementation(libs.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
