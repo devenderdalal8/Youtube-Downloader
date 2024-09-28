@@ -1,113 +1,120 @@
 package com.youtube.youtube_downloader.ui.screen
 
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.widget.Toast
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Divider
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.youtube.youtube_downloader.MainViewModel
+import com.youtube.youtube_downloader.UiState
+import com.youtube.youtube_downloader.data.model.Video
+import com.youtube.youtube_downloader.ui.theme.onPrimary
 
 @Composable
-fun HomeScreen(videoUrl: String = "") {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-
-    Surface(modifier = Modifier.fillMaxSize()) {
-        YoutubeVideoPlayer("GGvM28rWqWc", height = 300.dp, width = screenWidth)
-        Spacer(modifier = Modifier.padding(16.dp))
+fun HomeScreen(videoUrl: String = "", viewModel: MainViewModel) {
+    LaunchedEffect(key1 = videoUrl) {
+        viewModel.getVideoDetails(videoUrl)
     }
-}
-
-@Composable
-fun YoutubeVideoPlayer(videoId: String, height: Dp, width: Dp) {
+    val uiState = viewModel.videoDetails.collectAsState().value
     val context = LocalContext.current
+    when (uiState) {
+        is UiState.Success -> {
+            MainHomeScreen((uiState.data as Video), viewModel)
+        }
 
-    val webView = WebView(context).apply {
-        settings.javaScriptEnabled = true
-        settings.loadWithOverviewMode = true
-        webViewClient = WebViewClient()
-    }
+        is UiState.Error -> {
+            Toast.makeText(context, "Error : ${uiState.message}", Toast.LENGTH_SHORT).show()
+        }
 
-    val htmlData = getHTMLData(videoId, height, width)
-
-    Column(Modifier.fillMaxWidth()) {
-        AndroidView(
-            factory = { webView },
-            modifier = Modifier.widthIn(max = width)
-        ) { view ->
-            view.loadDataWithBaseURL(
-                "https://www.youtube.com",
-                htmlData,
-                "text/html",
-                "UTF-8",
-                null
-            )
-            view.webViewClient = object : WebViewClient() {
-                @Deprecated("Deprecated in Java", ReplaceWith("true"))
-                override fun shouldOverrideUrlLoading(
-                    view: WebView,
-                    url: String
-                ): Boolean {
-                    return true
-                }
+        is UiState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = onPrimary)
             }
         }
     }
 }
 
-
-fun getHTMLData(videoId: String, height: Dp, width: Dp): String {
-    return """
-        <html>
-            <body style="margin:0px;padding:0px;">
-                <div id="player"></div>
-                <script>
-                    var player;
-                    function onYouTubeIframeAPIReady() {
-                        player = new YT.Player('player', {
-                            height: '${height.value}',
-                            width: '${width.value}',
-                            videoId: '$videoId',
-                            playerVars: {
-                                'playsinline': 1
-                            },
-                            events: {
-                                'onReady': onPlayerReady
-                            }
-                        });
-                    }
-
-                    function onPlayerReady(event) {
-                        player.playVideo();
-                        // Override the click behavior for the YouTube logo
-                        var logo = document.querySelector('.ytp-title-link');
-                        if (logo) {
-                            logo.onclick = function(event) {
-                                event.preventDefault(); // Prevent default behavior
-                                Android.openYouTube('$videoId'); // Call Android method
-                            };
-                        }
-                    }
-                </script>
-                <script src="https://www.youtube.com/iframe_api"></script>
-            </body>
-        </html>
-    """.trimIndent()
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun MainHomeScreen(video: Video, viewModel: MainViewModel) {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier) {
+            PlayerScreen(
+                video = video,
+                viewModel = viewModel,
+                isDownloaded = true
+            )
+            Spacer(modifier = Modifier.padding(8.dp))
+            Title(title = video.title.toString(), thumbnailUrl = video.thumbnailUrl.toString())
+            Divider(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                startIndent = 1.dp,
+                thickness = 1.dp,
+                color = onPrimary
+            )
+            ShowVideoDetails(video = video)
+        }
+    }
 }
 
-@Preview
 @Composable
-private fun Preview() {
-    HomeScreen()
+fun ShowVideoDetails(video: Video) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+        Card(shape = RoundedCornerShape(16.dp)) {
+
+        }
+    }
+}
+
+
+@Composable
+fun Title(title: String, thumbnailUrl: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Card(shape = RoundedCornerShape(16.dp)) {
+            AsyncImage(
+                model = thumbnailUrl,
+                contentDescription = thumbnailUrl,
+                modifier = Modifier.size(64.dp),
+                contentScale = ContentScale.FillBounds
+            )
+        }
+        Text(
+            text = title,
+            modifier = Modifier
+                .weight(7f),
+            fontSize = 16.sp,
+            fontFamily = FontFamily.SansSerif,
+            color = onPrimary,
+            maxLines = 2
+        )
+    }
 }

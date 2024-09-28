@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.youtube.youtube_downloader.MainViewModel
 import com.youtube.youtube_downloader.ui.screen.ChannelScreen
 import com.youtube.youtube_downloader.ui.screen.HomeScreen
 import com.youtube.youtube_downloader.ui.screen.PlayListScreen
@@ -17,7 +18,10 @@ import com.youtube.youtube_downloader.util.Route
 
 
 @Composable
-fun MainNavigationScreen(modifier: Modifier) {
+fun MainNavigationScreen(
+    modifier: Modifier,
+    viewModel: MainViewModel
+) {
     val navController = rememberNavController()
     Scaffold(bottomBar = { CustomBottomBar(navController = navController) }) { innerPadding ->
         NavHost(
@@ -28,10 +32,10 @@ fun MainNavigationScreen(modifier: Modifier) {
                 .padding(innerPadding)
         ) {
             composable(Route.Home.route) {
-                HomeScreen()
+                HomeScreen("https://www.youtube.com/watch?v=ulZBNRlXW7A", viewModel = viewModel)
             }
             composable(BottomNavScreen.Home.route) {
-                HomeScreen()
+                HomeScreen("https://www.youtube.com/watch?v=ulZBNRlXW7A", viewModel = viewModel)
             }
             composable(BottomNavScreen.Setting.route) {
                 SettingScreen()
