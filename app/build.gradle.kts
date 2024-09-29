@@ -18,7 +18,6 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
-            // On Apple silicon, you can omit x86_64.
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
         }
         vectorDrawables {
@@ -39,36 +38,41 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
     buildFeatures {
         compose = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-
 }
 
 chaquopy {
     defaultConfig {
         version = "3.8"
-    }
-}
-
-chaquopy {
-    defaultConfig {
         buildPython("/usr/local/bin/python3")
-    }
-}
 
-chaquopy {
+        pip {
+            install("pytubefix")
+            install("requests")
+        }
+
+        pyc {
+            src = false
+        }
+    }
+
     sourceSets {
         getByName("main") {
             srcDir("src/main/python")
@@ -76,43 +80,27 @@ chaquopy {
     }
 }
 
-chaquopy {
-    defaultConfig {
-        pip {
-            install("pytubefix")
-            install("requests")
-        }
-    }
-}
-chaquopy {
-    defaultConfig {
-        pyc {
-            src = false
-        }
-    }
-}
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.converter.gson)
     implementation(libs.hilt.android)
     implementation(libs.retrofit)
-    implementation(libs.converter.gson)
-    implementation("androidx.media3:media3-exoplayer:1.4.1")
-    implementation("androidx.media3:media3-exoplayer-dash:1.4.1")
-    implementation("androidx.media3:media3-ui:1.4.1")
-    implementation("androidx.compose.material3:material3:1.0.0")
-    implementation("androidx.compose.material3:material3-window-size-class:1.0.0")
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation(libs.androidx.material3.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.ui) // Adjust version as needed
+    implementation(libs.ui)
     implementation(libs.androidx.material)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
     implementation(libs.androidx.webkit)
     implementation(libs.core)
     testImplementation(libs.junit)

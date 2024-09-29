@@ -6,12 +6,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material.Card
 import androidx.compose.material.Icon
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.Card
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,13 +23,14 @@ import androidx.navigation.NavController
 import com.youtube.youtube_downloader.R
 import com.youtube.youtube_downloader.util.BottomNavScreen
 
-
 @Composable
 fun CustomBottomBar(navController: NavController) {
     val selectedItem = remember { mutableStateOf(BottomNavScreen.Home.title) }
     Card(
-        modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(40.dp),
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+        shape = RoundedCornerShape(40.dp),
     ) {
         BottomNavigation(
             modifier = Modifier
@@ -38,11 +38,10 @@ fun CustomBottomBar(navController: NavController) {
                 .height(60.dp),
             backgroundColor = Color.Black
         ) {
-            // Home Icon
             BottomNavigationItem(
                 icon = {
                     Icon(
-                        imageVector = Icons.Default.Home,
+                        painter = painterResource(id = R.drawable.ic_home_icon),
                         contentDescription = "Home",
                         tint = Color.White,
                         modifier = Modifier.size(30.dp)
@@ -93,7 +92,7 @@ fun CustomBottomBar(navController: NavController) {
             BottomNavigationItem(
                 icon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_chennel_icon),
+                        painter = painterResource(id = R.drawable.ic_channel_icon),
                         contentDescription = "Notifications",
                         tint = Color.White,
                         modifier = Modifier.size(30.dp)

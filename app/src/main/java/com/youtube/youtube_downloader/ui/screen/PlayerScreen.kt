@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.annotation.OptIn
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -12,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,6 +28,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
@@ -34,7 +36,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.youtube.youtube_downloader.MainViewModel
 import com.youtube.youtube_downloader.data.model.Video
-import com.youtube.youtube_downloader.ui.theme.onPrimary
 
 @SuppressLint("OpaqueUnitKey")
 @ExperimentalAnimationApi
@@ -72,6 +73,7 @@ fun PlayerScreen(
     }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
 fun DownloadedVideoPlayer(viewModel: MainViewModel) {
     Box(modifier = Modifier) {
@@ -95,6 +97,7 @@ fun DownloadedVideoPlayer(viewModel: MainViewModel) {
     }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
 fun OnlineVideoPlayer(
     video: Video,
@@ -120,7 +123,7 @@ fun OnlineVideoPlayer(
 
                     setFullscreenButtonClickListener { isFullScreen ->
                         if (isFullScreen) {
-                            resizeMode = AspectRatioFrameLayout.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                         } else {
                             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                         }
@@ -158,7 +161,6 @@ fun ProgressBarWithImage(video: Video, visibility: Boolean, isReleased: Boolean)
                 .size(48.dp)
                 .fillMaxSize()
                 .alpha(if (visibility) 1f else 0f),
-            color = onPrimary
         )
     }
 }
