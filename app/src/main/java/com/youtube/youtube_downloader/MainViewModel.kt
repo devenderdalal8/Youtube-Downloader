@@ -1,5 +1,6 @@
 package com.youtube.youtube_downloader
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -12,6 +13,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
 import javax.inject.Inject
 
 @HiltViewModel
@@ -61,11 +65,6 @@ class MainViewModel @Inject constructor(
         exoPlayer.prepare()
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        exoPlayer.release()
-    }
-
     private val _videoDetails = MutableStateFlow<UiState>(UiState.Loading)
     val videoDetails = _videoDetails.asStateFlow()
 
@@ -80,6 +79,29 @@ class MainViewModel @Inject constructor(
                 _videoDetails.value = UiState.Error(ex.message.toString())
             }
         }
+    }
+
+    fun getFileSizeFromUrl(videoUrl: String): String {
+        var length = ""
+        viewModelScope.launch(Dispatchers.IO) {
+            val url = URL(videoUrl)
+            var conn: HttpURLConnection? = null
+            try {
+                conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "HEAD"
+                length = conn.contentLengthLong.toString()
+            } catch (e: IOException) {
+                Log.e("TAG", "getFileSizeFromUrl: ${e.message}")
+            } finally {
+                conn?.disconnect()
+            }
+        }
+        return length
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        exoPlayer.release()
     }
 }
 
