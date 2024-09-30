@@ -13,7 +13,7 @@ class GetVideoDetailsUseCase @Inject constructor(
     private val pythonScriptRepository: PythonScriptRepository
 ) {
     suspend operator fun invoke(url: String): Video? {
-        var result: Video? = Video()
+        var result: Video?
         withContext(Dispatchers.IO) {
             val details =
                 pythonScriptRepository.downloadAsync(PythonMethod.VIDEO_DETAILS.title, url)
