@@ -13,16 +13,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Divider
-import androidx.compose.material.OutlinedButton
-import androidx.compose.material.Text
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -35,7 +39,9 @@ import com.youtube.youtube_downloader.data.model.Video
 import com.youtube.youtube_downloader.util.Constant
 
 @Composable
-fun HomeScreen(videoUrl: String = "", viewModel: MainViewModel, onDownloadClicked: () -> Unit) {
+fun HomeScreen(
+    videoUrl: String = "", viewModel: MainViewModel, onDownloadClicked: () -> Unit
+) {
     LaunchedEffect(key1 = videoUrl) {
         viewModel.getVideoDetails(videoUrl)
     }
@@ -68,17 +74,11 @@ fun MainHomeScreen(video: Video, viewModel: MainViewModel, onDownloadClicked: ()
     ) {
         Column(modifier = Modifier) {
             PlayerScreen(
-                video = video,
-                viewModel = viewModel,
-                isDownloaded = true
+                video = video, viewModel = viewModel, isDownloaded = true
             )
             Spacer(modifier = Modifier.padding(8.dp))
             Title(title = video.title.toString(), thumbnailUrl = video.thumbnailUrl.toString())
-            Divider(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                startIndent = 1.dp,
-                thickness = 1.dp,
-            )
+            HorizontalDivider(thickness = 1.dp , color = Color.Black)
             ShowVideoDetails(video = video, viewModel = viewModel)
         }
         DownloadButton(video = video, onButtonClicked = { onDownloadClicked() })
@@ -111,8 +111,9 @@ fun ShowVideoDetails(video: Video, viewModel: MainViewModel) {
         if (video.views != null) {
             VideoDetails(video.views.toString(), "Views")
         }
-        if (viewModel.getFileSizeFromUrl(video.videoUrl.toString()) != null) {
-            VideoDetails(video.views.toString(), "Size")
+        val size = viewModel.size.collectAsState().value
+        if (size.isNotEmpty()) {
+            VideoDetails(size, "Size")
         }
     }
 }
@@ -150,12 +151,7 @@ fun Title(title: String, thumbnailUrl: String) {
             )
         }
         Text(
-            text = title,
-            modifier = Modifier
-                .weight(7f),
-            fontSize = 16.sp,
-            fontFamily = FontFamily.SansSerif,
-            maxLines = 2
+            text = title, style = LocalTextStyle.current, maxLines = 2
         )
     }
 }

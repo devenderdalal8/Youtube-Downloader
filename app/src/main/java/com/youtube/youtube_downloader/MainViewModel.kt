@@ -8,6 +8,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.youtube.youtube_downloader.domain.usecase.GetVideoDetailsUseCase
+import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,11 +21,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val getVideoDetailsUseCase: GetVideoDetailsUseCase, val exoPlayer: ExoPlayer
+    private val getVideoDetailsUseCase: GetVideoDetailsUseCase,
+    val exoPlayer: ExoPlayer
 ) : ViewModel() {
 
     private val _progressBarVisibility = MutableStateFlow(true)
     val progressBar = _progressBarVisibility.asStateFlow()
+
+    private val _size = MutableStateFlow("")
+    val size = _size.asStateFlow()
 
     init {
         handleExoPlayerListener()
@@ -72,6 +77,9 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = getVideoDetailsUseCase(url = url)
+                if (result?.videoUrl?.isNotEmpty() == true) {
+                    getFileSizeFromUrl(result.videoUrl.toString())
+                }
                 if (result != null) {
                     _videoDetails.value = UiState.Success(result)
                 }
@@ -81,15 +89,16 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun getFileSizeFromUrl(videoUrl: String): String {
+    private fun getFileSizeFromUrl(videoUrl: String): String {
         var length = ""
         viewModelScope.launch(Dispatchers.IO) {
-            val url = URL(videoUrl)
             var conn: HttpURLConnection? = null
             try {
+                val url = URL(videoUrl)
                 conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "HEAD"
-                length = conn.contentLengthLong.toString()
+                length = conn.contentLengthLong.getFileSize()
+                _size.value = length
             } catch (e: IOException) {
                 Log.e("TAG", "getFileSizeFromUrl: ${e.message}")
             } finally {
