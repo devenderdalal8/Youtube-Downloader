@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application
         android:allowBackup="true"
-        android:name=".MyApplication"
+        android:name=".presenter.MyApplication"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -19,7 +19,7 @@
         android:theme="@style/Theme.YoutubeDownloader"
         tools:targetApi="31" >
         <activity
-            android:name=".MainActivity"
+            android:name=".presenter.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.YoutubeDownloader" >
             <intent-filter>

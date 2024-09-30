@@ -1,12 +1,8 @@
-package com.youtube.youtube_downloader
+package com.youtube.youtube_downloader.presenter
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
-import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
 import com.youtube.youtube_downloader.domain.usecase.GetVideoDetailsUseCase
 import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,53 +18,10 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getVideoDetailsUseCase: GetVideoDetailsUseCase,
-    val exoPlayer: ExoPlayer
 ) : ViewModel() {
-
-    private val _progressBarVisibility = MutableStateFlow(true)
-    val progressBar = _progressBarVisibility.asStateFlow()
 
     private val _size = MutableStateFlow("")
     val size = _size.asStateFlow()
-
-    init {
-        handleExoPlayerListener()
-    }
-
-    private fun handleExoPlayerListener() {
-        exoPlayer.addListener(object : Player.Listener {
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                mediaItem?.let {
-
-                }
-            }
-
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                when (playbackState) {
-                    Player.STATE_BUFFERING -> {
-                        _progressBarVisibility.value = true
-
-                    }
-
-                    Player.EVENT_PLAY_WHEN_READY_CHANGED -> {}
-                    Player.STATE_READY -> {
-                        _progressBarVisibility.value = false
-                    }
-
-                    Player.STATE_IDLE -> {
-                        _progressBarVisibility.value = false
-                    }
-                }
-            }
-        })
-    }
-
-    fun setMediaItem(videoUrl: String?, title: String? = "") {
-        val mediaItem = MediaItem.Builder().setUri(videoUrl).setMediaId(videoUrl.toString())
-            .setMediaMetadata(MediaMetadata.Builder().setDisplayTitle(title).build()).build()
-        exoPlayer.setMediaItem(mediaItem)
-        exoPlayer.prepare()
-    }
 
     private val _videoDetails = MutableStateFlow<UiState>(UiState.Loading)
     val videoDetails = _videoDetails.asStateFlow()
@@ -77,11 +30,12 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = getVideoDetailsUseCase(url = url)
+                var length = ""
                 if (result?.videoUrl?.isNotEmpty() == true) {
-                    getFileSizeFromUrl(result.videoUrl.toString())
+                    length = getFileSizeFromUrl(result.videoUrl.toString())
                 }
                 if (result != null) {
-                    _videoDetails.value = UiState.Success(result)
+                    _videoDetails.value = UiState.Success(result.copy(size = length))
                 }
             } catch (ex: Exception) {
                 _videoDetails.value = UiState.Error(ex.message.toString())
@@ -106,11 +60,6 @@ class MainViewModel @Inject constructor(
             }
         }
         return length
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        exoPlayer.release()
     }
 }
 

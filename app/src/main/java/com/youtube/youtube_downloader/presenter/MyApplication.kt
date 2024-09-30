@@ -1,4 +1,4 @@
-package com.youtube.youtube_downloader
+package com.youtube.youtube_downloader.presenter
 
 import com.chaquo.python.android.PyApplication
 import dagger.hilt.android.HiltAndroidApp

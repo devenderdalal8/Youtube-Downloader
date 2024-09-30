@@ -1,6 +1,4 @@
-
-
-package com.youtube.youtube_downloader.ui.theme
+package com.youtube.youtube_downloader.presenter.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.PlatformTextStyle
@@ -30,7 +28,7 @@ val defaultTextStyle = TextStyle(
     )
 )
 
-val JetnewsTypography = Typography(
+val YoutubeTypography = Typography(
     displayLarge = defaultTextStyle.copy(
         fontSize = 57.sp, lineHeight = 64.sp, letterSpacing = (-0.25).sp
     ),

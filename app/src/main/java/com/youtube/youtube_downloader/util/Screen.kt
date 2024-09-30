@@ -22,6 +22,10 @@ sealed class Route(val route: String) {
     data object WatchList : Route(Screen.WATCHLIST.name)
 }
 
+enum class BottomSheet {
+    Download
+}
+
 sealed class BottomNavScreen(val route: String, val title: String, val icon: Int) {
     data object Home : BottomNavScreen("home", "Home", R.drawable.ic_home_icon)
     data object PlayList : BottomNavScreen("PlayList", "PlayList", R.drawable.ic_playlist_icon)
