@@ -1,4 +1,4 @@
-package com.youtube.youtube_downloader.ui.screen
+package com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,10 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
-
 @Composable
-fun DownloadScreen() {
+fun SearchScreen() {
     Column(Modifier.fillMaxSize()){
-        Text(text = "Download" , color = Color.Red)
+        Text(text = "Search" , color = Color.Red)
     }
 }

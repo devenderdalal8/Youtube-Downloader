@@ -1,4 +1,4 @@
-package com.youtube.youtube_downloader.ui.screen
+package com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen
 
 import android.widget.Toast
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedButton
@@ -33,9 +31,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.youtube.youtube_downloader.MainViewModel
-import com.youtube.youtube_downloader.UiState
 import com.youtube.youtube_downloader.data.model.Video
+import com.youtube.youtube_downloader.presenter.MainViewModel
+import com.youtube.youtube_downloader.presenter.UiState
+import com.youtube.youtube_downloader.presenter.ui.screen.player.PlayerScreen
 import com.youtube.youtube_downloader.util.Constant
 
 @Composable
@@ -74,12 +73,12 @@ fun MainHomeScreen(video: Video, viewModel: MainViewModel, onDownloadClicked: ()
     ) {
         Column(modifier = Modifier) {
             PlayerScreen(
-                video = video, viewModel = viewModel, isDownloaded = true
+                video = video, isDownloaded = true
             )
             Spacer(modifier = Modifier.padding(8.dp))
             Title(title = video.title.toString(), thumbnailUrl = video.thumbnailUrl.toString())
             HorizontalDivider(thickness = 1.dp , color = Color.Black)
-            ShowVideoDetails(video = video, viewModel = viewModel)
+            ShowVideoDetails(video = video)
         }
         DownloadButton(video = video, onButtonClicked = { onDownloadClicked() })
     }
@@ -103,7 +102,7 @@ fun BoxScope.DownloadButton(video: Video, onButtonClicked: () -> Unit) {
 }
 
 @Composable
-fun ShowVideoDetails(video: Video, viewModel: MainViewModel) {
+fun ShowVideoDetails(video: Video) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
         if (video.likes != null) {
             VideoDetails(video.likes.toString(), "Likes")
@@ -111,7 +110,7 @@ fun ShowVideoDetails(video: Video, viewModel: MainViewModel) {
         if (video.views != null) {
             VideoDetails(video.views.toString(), "Views")
         }
-        val size = viewModel.size.collectAsState().value
+        val size = video.size.toString()
         if (size.isNotEmpty()) {
             VideoDetails(size, "Size")
         }
@@ -131,7 +130,6 @@ fun VideoDetails(title: String, desc: String) {
         )
     }
 }
-
 
 @Composable
 fun Title(title: String, thumbnailUrl: String) {

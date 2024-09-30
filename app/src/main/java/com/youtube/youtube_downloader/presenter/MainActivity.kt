@@ -1,4 +1,4 @@
-package com.youtube.youtube_downloader
+package com.youtube.youtube_downloader.presenter
 
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -8,8 +8,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import com.youtube.youtube_downloader.ui.screen.navigation.MainNavigationScreen
-import com.youtube.youtube_downloader.ui.theme.YoutubeDownloaderTheme
+import com.youtube.youtube_downloader.presenter.ui.screen.navigation.MainNavigationScreen
+import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeDownloaderTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

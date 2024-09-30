@@ -1,4 +1,4 @@
-package com.youtube.youtube_downloader.ui.screen
+package com.youtube.youtube_downloader.presenter.ui.screen.player
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -26,19 +26,22 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.youtube.youtube_downloader.MainViewModel
 import com.youtube.youtube_downloader.data.model.Video
 
 @SuppressLint("OpaqueUnitKey")
 @ExperimentalAnimationApi
 @Composable
 fun PlayerScreen(
-    video: Video, modifier: Modifier = Modifier, viewModel: MainViewModel, isDownloaded: Boolean
+    video: Video,
+    modifier: Modifier = Modifier,
+    viewModel: PlayerViewModel = hiltViewModel(),
+    isDownloaded: Boolean
 ) {
     val context = LocalContext.current
     val progressBarVisibility = viewModel.progressBar.collectAsState().value
@@ -68,30 +71,10 @@ fun PlayerScreen(
 
 @OptIn(UnstableApi::class)
 @Composable
-fun DownloadedVideoPlayer(viewModel: MainViewModel) {
-    Box(modifier = Modifier) {
-        AndroidView(factory = { context ->
-            PlayerView(context).apply {
-                setFullscreenButtonClickListener { isFullscreen -> }
-                showController()
-                useController = true
-                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                player = viewModel.exoPlayer
-                layoutParams = FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-            }
-        })
-    }
-}
-
-@OptIn(UnstableApi::class)
-@Composable
 fun OnlineVideoPlayer(
     video: Video,
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel,
+    viewModel: PlayerViewModel,
     context: Context,
     progressBarVisibility: Boolean
 ) {

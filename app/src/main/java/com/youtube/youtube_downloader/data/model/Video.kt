@@ -1,7 +1,6 @@
 package com.youtube.youtube_downloader.data.model
 
 import com.google.gson.annotations.SerializedName
-import java.time.LocalDateTime
 
 data class Video(
     @SerializedName("title") val title: String? = "",
@@ -18,6 +17,8 @@ data class Video(
     @SerializedName("channel_url") val channelUrl: String? = "",
     @SerializedName("channel_id") val channelId: String? = "",
     @SerializedName("size") var size: String? = "",
+    @SerializedName("downloaded") var isDownloaded: Boolean = false,
+    @SerializedName("downloaded_path") var downloadedPath: String? = "",
 ) {
     override fun toString(): String {
         return "Video(title=$title, thumbnailUrl=$thumbnailUrl , videoUrl = $videoUrl ,duration=$duration, views=$views, likes=$likes, resolution=$resolution, resolutionList=$resolutionList, uploadDate=$uploadDate, channelUrl=$channelUrl, channelId=$channelId)"
