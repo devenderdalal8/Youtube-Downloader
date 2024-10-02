@@ -6,4 +6,5 @@ object Constant {
     const val PLAYLIST = "playlist?list="
     const val DOWNLOAD = "Download"
     const val AUDIO = "Audio Only"
+    const val DESCRIPTION = "Description"
 }

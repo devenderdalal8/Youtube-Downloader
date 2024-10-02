@@ -11,16 +11,6 @@ class YouTubeDownloader:
         self.url = url
         self.yt = YouTube(url)
 
-    def get_video_urls_by_resolution(self):
-        streams = self.yt.streams.filter()
-        resolution_map = {}
-
-        for stream in streams:
-            if stream.resolution is not None:  # Check if resolution is valid
-                resolution_map[stream.resolution] = stream.url  # Map resolution to URL
-
-        return resolution_map
-
     def get_available_resolutions(self):
         streams = self.yt.streams.filter()
         available_resolutions = {stream.resolution for stream in streams if
@@ -33,6 +23,7 @@ class YouTubeDownloader:
                 title=self.yt.title,
                 description=self.yt.description,
                 thumbnail_url=self.yt.thumbnail_url,
+                base_url=self.url,
                 video_id=self.yt.video_id,
                 video_url=self.yt.streams.get_highest_resolution().url,
                 duration=self.yt.length,
@@ -41,7 +32,6 @@ class YouTubeDownloader:
                 resolution=self.get_available_resolutions(),
                 upload_date=str(
                     self.yt.publish_date.isoformat() if self.yt.publish_date else None),
-                # Will use the current date
                 channel_url=self.yt.channel_url,
                 channel_id=self.yt.channel_id
             )
@@ -53,7 +43,6 @@ class YouTubeDownloader:
         try:
             streams = self.yt.streams.filter()
             available_resolutions = {stream.resolution for stream in streams}
-            print("Available Resolutions:", available_resolutions)
             selected_stream = next(
                 (stream for stream in streams if stream.resolution == target_resolution), None)
 
@@ -138,7 +127,8 @@ class ChannelDownloader:
 
 
 class Video:
-    def __init__(self, title="", description="", thumbnail_url="", video_url="", video_id="",
+    def __init__(self, title="", description="", thumbnail_url="", base_url="", video_url="",
+                 video_id="",
                  duration="",
                  views="", likes=None,
                  resolution=None, resolution_list=None, upload_date=None, channel_url="",
@@ -148,6 +138,7 @@ class Video:
         self.thumbnail_url = thumbnail_url
         self.video_url = video_url
         self.video_id = video_id
+        self.base_url = base_url
         self.duration = duration
         self.views = views
         self.likes = likes  # Can be None
@@ -171,6 +162,10 @@ def video_details(url):
     downloader = YouTubeDownloader(url)
     return downloader.video_details()
 
+
+def video_resolution(url, resolution):
+    downloader = YouTubeDownloader(url)
+    return downloader.get_video_url_by_resolution(resolution)
 
 def download_audio(url, mp3=True):
     downloader = YouTubeDownloader(url)

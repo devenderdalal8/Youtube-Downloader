@@ -7,6 +7,7 @@ data class Video(
     @SerializedName("description") val description: String? = "",
     @SerializedName("thumbnail_url") val thumbnailUrl: String? = "",
     @SerializedName("video_url") val videoUrl: String? = "",
+    @SerializedName("base_url") val baseUrl: String? = "",
     @SerializedName("video_id") val videoId: String? = "",
     @SerializedName("duration") val duration: String? = "",
     @SerializedName("views") val views: String? = "",
@@ -21,6 +22,6 @@ data class Video(
     @SerializedName("downloaded_path") var downloadedPath: String? = "",
 ) {
     override fun toString(): String {
-        return "Video(title=$title, thumbnailUrl=$thumbnailUrl , videoUrl = $videoUrl ,duration=$duration, views=$views, likes=$likes, resolution=$resolution, resolutionList=$resolutionList, uploadDate=$uploadDate, channelUrl=$channelUrl, channelId=$channelId)"
+        return "Video(title=$title, size = $size ,thumbnailUrl=$thumbnailUrl , videoUrl = $videoUrl ,duration=$duration, views=$views, likes=$likes, resolution=$resolution, resolutionList=$resolutionList, uploadDate=$uploadDate, channelUrl=$channelUrl, channelId=$channelId)"
     }
 }

@@ -26,16 +26,14 @@ class MainViewModel @Inject constructor(
     private val _videoDetails = MutableStateFlow<UiState>(UiState.Loading)
     val videoDetails = _videoDetails.asStateFlow()
 
+
     fun getVideoDetails(url: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = getVideoDetailsUseCase(url = url)
-                var length = ""
-                if (result?.videoUrl?.isNotEmpty() == true) {
-                    length = getFileSizeFromUrl(result.videoUrl.toString())
-                }
+                result?.videoUrl?.getSize()
                 if (result != null) {
-                    _videoDetails.value = UiState.Success(result.copy(size = length))
+                    _videoDetails.value = UiState.Success(result.copy(size = _size.value))
                 }
             } catch (ex: Exception) {
                 _videoDetails.value = UiState.Error(ex.message.toString())
@@ -43,23 +41,20 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun getFileSizeFromUrl(videoUrl: String): String {
-        var length = ""
+    private fun String.getSize() {
         viewModelScope.launch(Dispatchers.IO) {
             var conn: HttpURLConnection? = null
             try {
-                val url = URL(videoUrl)
+                val url = URL(this@getSize)
                 conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "HEAD"
-                length = conn.contentLengthLong.getFileSize()
-                _size.value = length
+                _size.value = conn.contentLengthLong.getFileSize()
             } catch (e: IOException) {
                 Log.e("TAG", "getFileSizeFromUrl: ${e.message}")
             } finally {
                 conn?.disconnect()
             }
         }
-        return length
     }
 }
 

@@ -54,13 +54,13 @@ val DarkColors = darkColorScheme(
     tertiaryContainer = dark_tertiaryContainer,
     onTertiaryContainer = dark_onTertiaryContainer,
     error = dark_error,
-    errorContainer = dark_errorContainer,
     onError = dark_onError,
-    onErrorContainer = dark_onErrorContainer,
     background = dark_background,
     onBackground = dark_onBackground,
     surface = dark_surface,
     onSurface = dark_onSurface,
+    onErrorContainer = dark_onErrorContainer,
+    errorContainer = dark_errorContainer,
     surfaceVariant = dark_surfaceVariant,
     onSurfaceVariant = dark_onSurfaceVariant,
     outline = dark_outline,
@@ -78,9 +78,9 @@ fun YoutubeDownloaderTheme(
     val colorScheme =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicDarkColorScheme(context)
         } else {
-            if (darkTheme) DarkColors else LightColors
+            if (darkTheme) DarkColors else DarkColors
         }
 
     MaterialTheme(

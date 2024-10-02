@@ -4,8 +4,4 @@ import com.chaquo.python.android.PyApplication
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
-class MyApplication : PyApplication() {
-    override fun onCreate() {
-        super.onCreate()
-    }
-}
+class MyApplication : PyApplication()
