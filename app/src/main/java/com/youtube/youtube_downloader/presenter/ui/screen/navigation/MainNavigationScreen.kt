@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -13,10 +14,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
+import com.youtube.youtube_downloader.data.model.Video
 import com.youtube.youtube_downloader.presenter.MainViewModel
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.HomeScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.PlayListScreen
@@ -32,15 +36,18 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainNavigationScreen(
-    modifier: Modifier = Modifier, viewModel: MainViewModel
+    modifier: Modifier = Modifier, viewModel: MainViewModel, navController: NavHostController
 ) {
-    val navController = rememberNavController()
+
     val downloadBottomSheetState = rememberModalBottomSheetState()
 
     val activeBottomSheet = remember {
         mutableStateOf<BottomSheet?>(null)
     }
     val coroutineScope = rememberCoroutineScope()
+    val downloadResolution = remember {
+        mutableStateOf<Video?>(null)
+    }
 
     Scaffold(bottomBar = {
         if (navController.isBottomBarScreen()) {
@@ -55,9 +62,12 @@ fun MainNavigationScreen(
                 .padding(innerPadding)
         ) {
             composable(BottomNavScreen.Home.route) {
-                HomeScreen("https://www.youtube.com/watch?v=ulZBNRlXW7A",
+                HomeScreen(
+                    "https://www.youtube.com/watch?v=ulZBNRlXW7A",
                     viewModel = viewModel,
-                    onDownloadClicked = {
+                    isSearchable = true,
+                    onDownloadClicked = { videos ->
+                        downloadResolution.value = videos
                         activeBottomSheet.value = BottomSheet.Download
                         coroutineScope.launch { downloadBottomSheetState.show() }
                     })
@@ -68,7 +78,7 @@ fun MainNavigationScreen(
             composable(BottomNavScreen.Setting.route) {
                 SettingScreen()
             }
-            composable(BottomNavScreen.Channels.route) {
+            composable(BottomNavScreen.Download.route) {
                 SettingScreen()
             }
             composable(BottomNavScreen.PlayList.route) {
@@ -80,6 +90,26 @@ fun MainNavigationScreen(
             composable(Route.Download.route) {
 
             }
+            composable(
+                route = "watch/{itemId}",
+                arguments = listOf(navArgument("itemId") { type = NavType.StringType }),
+                deepLinks = listOf(navDeepLink {
+                    uriPattern = "https://youtu.be/{itemId}"
+                }, navDeepLink {
+                    uriPattern = "https://www.youtube.com/watch?v={itemId}"
+                })
+            ) { backStackEntry ->
+                val itemId = backStackEntry.arguments?.getString("itemId")
+                HomeScreen(
+                    "https://www.youtube.com/watch?v=${itemId}",
+                    viewModel = viewModel,
+                    isSearchable = true,
+                    onDownloadClicked = { videos ->
+                        downloadResolution.value = videos
+                        activeBottomSheet.value = BottomSheet.Download
+                        coroutineScope.launch { downloadBottomSheetState.show() }
+                    })
+            }
         }
     }
 
@@ -90,15 +120,21 @@ fun MainNavigationScreen(
                 else -> downloadBottomSheetState
             },
             onDismissRequest = { activeBottomSheet.value = null },
+            properties = ModalBottomSheetProperties(shouldDismissOnBackPress = true),
         ) {
             when (activeBottomSheet.value) {
                 BottomSheet.Download -> {
-                    DownloadBottomSheet(modifier = modifier, onDismiss = {
-                        coroutineScope.launch {
-                            downloadBottomSheetState.hide()
-                            activeBottomSheet.value = null
-                        }
-                    })
+                    downloadResolution.value?.let {
+                        DownloadBottomSheet(
+                            modifier = modifier,
+                            video = it,
+                            onDismiss = {
+                                coroutineScope.launch {
+                                    downloadBottomSheetState.hide()
+                                    activeBottomSheet.value = null
+                                }
+                            })
+                    }
                 }
 
                 else -> {
@@ -118,7 +154,7 @@ fun NavHostController.isBottomBarScreen(): Boolean {
     return (currentRoute in listOf(
         BottomNavScreen.Home.route,
         BottomNavScreen.PlayList.route,
-        BottomNavScreen.Channels.route,
+        BottomNavScreen.Download.route,
         BottomNavScreen.Setting.route,
         BottomNavScreen.Search.route
     ))

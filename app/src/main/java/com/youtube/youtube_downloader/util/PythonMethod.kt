@@ -7,4 +7,5 @@ enum class PythonMethod(val title: String) {
     DOWNLOAD_PLAYLIST("download_playlist"),
     DOWNLOAD_CHANNEL("download_channel"),
     VIDEO_DETAILS("video_details"),
+    VIDEO_RESOLUTION("video_resolution"),
 }
