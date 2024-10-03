@@ -50,8 +50,8 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.youtube.youtube_downloader.R
 import com.youtube.domain.model.Video
-import com.youtube.youtube_downloader.presenter.MainViewModel
-import com.youtube.youtube_downloader.presenter.UiState
+import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.MainViewModel
+import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.UiState
 import com.youtube.youtube_downloader.presenter.ui.screen.player.PlayerScreen
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeTypography
 import com.youtube.youtube_downloader.presenter.ui.theme.font_12

@@ -1,9 +1,12 @@
-package com.youtube.youtube_downloader.presenter
+package com.youtube.youtube_downloader.presenter.ui.screen.mainActivity
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.youtube.domain.model.Video
 import com.youtube.domain.usecase.GetVideoDetailsUseCase
+import com.youtube.domain.utils.Resource
 import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -30,10 +33,20 @@ class MainViewModel @Inject constructor(
     fun getVideoDetails(url: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val result = getVideoDetailsUseCase(url = url)
-                result?.videoUrl?.getSize()
-                if (result != null) {
-                    _videoDetails.value = UiState.Success(result.copy(size = _size.value))
+                when (val result = getVideoDetailsUseCase(url = url)) {
+                    is Resource.Success -> {
+                        val data = Gson().fromJson(result.data.toString(), Video::class.java)
+                        data.videoUrl?.getSize()
+                        _videoDetails.value = UiState.Success(data.copy(size = _size.value))
+                    }
+
+                    is Resource.Error -> {
+                        _videoDetails.value = UiState.Error(result.message.toString())
+                    }
+
+                    is Resource.Loading -> {
+                        _videoDetails.value = UiState.Loading
+                    }
                 }
             } catch (ex: Exception) {
                 _videoDetails.value = UiState.Error(ex.message.toString())

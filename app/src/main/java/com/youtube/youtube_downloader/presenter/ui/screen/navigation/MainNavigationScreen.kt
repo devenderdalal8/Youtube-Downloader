@@ -21,104 +21,104 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.youtube.domain.model.Video
-import com.youtube.youtube_downloader.presenter.MainViewModel
+import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.MainViewModel
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.HomeScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.PlayListScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.SearchScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.SettingScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.download.DownloadBottomSheet
+import com.youtube.youtube_downloader.presenter.ui.screen.splashScreen.SplashScreen
 import com.youtube.youtube_downloader.util.BottomNavScreen
 import com.youtube.youtube_downloader.util.BottomSheet
 import com.youtube.youtube_downloader.util.Route
 import kotlinx.coroutines.launch
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainNavigationScreen(
-    modifier: Modifier = Modifier, viewModel: MainViewModel, navController: NavHostController
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel,
+    navController: NavHostController
 ) {
 
     val downloadBottomSheetState = rememberModalBottomSheetState()
-
-    val activeBottomSheet = remember {
-        mutableStateOf<BottomSheet?>(null)
-    }
+    val activeBottomSheet = remember { mutableStateOf<BottomSheet?>(null) }
     val coroutineScope = rememberCoroutineScope()
-    val downloadResolution = remember {
-        mutableStateOf<Video?>(null)
-    }
+    val downloadResolution = remember { mutableStateOf<Video?>(null) }
 
-    Scaffold(bottomBar = {
-        if (navController.isBottomBarScreen()) {
-            CustomBottomBar(navController = navController)
+    Scaffold(
+        bottomBar = {
+            if (navController.isBottomBarScreen()) {
+                CustomBottomBar(navController = navController)
+            }
         }
-    }) { innerPadding ->
+    ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = BottomNavScreen.Home.route,
+            startDestination = Route.Splash.route,  // Splash screen as the start
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            composable(Route.Splash.route) {
+                SplashScreen(modifier = modifier) {
+                    navController.navigate(BottomNavScreen.Home.route) {
+                        popUpTo(Route.Splash.route) { inclusive = true }
+                    }
+                }
+            }
+
             composable(BottomNavScreen.Home.route) {
                 HomeScreen(
-                    "https://www.youtube.com/watch?v=ulZBNRlXW7A",
+                    videoUrl = "https://www.youtube.com/watch?v=ulZBNRlXW7A",
                     viewModel = viewModel,
                     isSearchable = true,
                     onDownloadClicked = { videos ->
                         downloadResolution.value = videos
                         activeBottomSheet.value = BottomSheet.Download
                         coroutineScope.launch { downloadBottomSheetState.show() }
-                    })
-            }
-            composable(Route.Download.route) {
-                PlayListScreen()
+                    }
+                )
             }
             composable(BottomNavScreen.Setting.route) {
                 SettingScreen()
             }
             composable(BottomNavScreen.Download.route) {
-                SettingScreen()
+                PlayListScreen()
             }
             composable(BottomNavScreen.PlayList.route) {
-                SettingScreen()
+                PlayListScreen()
             }
             composable(BottomNavScreen.Search.route) {
                 SearchScreen()
             }
-            composable(Route.Download.route) {
 
-            }
             composable(
                 route = "watch/{itemId}",
                 arguments = listOf(navArgument("itemId") { type = NavType.StringType }),
-                deepLinks = listOf(navDeepLink {
-                    uriPattern = "https://youtu.be/{itemId}"
-                }, navDeepLink {
-                    uriPattern = "https://www.youtube.com/watch?v={itemId}"
-                })
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "https://youtu.be/{itemId}" },
+                    navDeepLink { uriPattern = "https://www.youtube.com/watch?v={itemId}" }
+                )
             ) { backStackEntry ->
                 val itemId = backStackEntry.arguments?.getString("itemId")
                 HomeScreen(
-                    "https://www.youtube.com/watch?v=${itemId}",
+                    videoUrl = "https://www.youtube.com/watch?v=${itemId}",
                     viewModel = viewModel,
                     isSearchable = true,
                     onDownloadClicked = { videos ->
                         downloadResolution.value = videos
                         activeBottomSheet.value = BottomSheet.Download
                         coroutineScope.launch { downloadBottomSheetState.show() }
-                    })
+                    }
+                )
             }
         }
     }
 
     if (activeBottomSheet.value != null) {
         ModalBottomSheet(
-            sheetState = when (activeBottomSheet.value) {
-                BottomSheet.Download -> downloadBottomSheetState
-                else -> downloadBottomSheetState
-            },
+            sheetState = downloadBottomSheetState,
             onDismissRequest = { activeBottomSheet.value = null },
             properties = ModalBottomSheetProperties(shouldDismissOnBackPress = true),
         ) {
@@ -136,14 +136,10 @@ fun MainNavigationScreen(
                             })
                     }
                 }
-
-                else -> {
-
-                }
+                else -> {}
             }
         }
     }
-
 }
 
 @Composable

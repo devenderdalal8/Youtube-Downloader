@@ -10,12 +10,14 @@ enum class Screen {
     SEARCH,
     CHANNELS,
     PLAYLIST,
-    SETTING
+    SETTING,
+    SPLASH
 }
 
 sealed class Route(val route: String) {
     data object Home : Route(Screen.HOME.name)
     data object Download : Route(Screen.DOWNLOAD.name)
+    data object Splash : Route(Screen.SPLASH.name)
     data object PlayList : Route(Screen.PLAYLIST.name)
     data object Channels : Route(Screen.CHANNELS.name)
     data object Setting : Route(Screen.SETTING.name)

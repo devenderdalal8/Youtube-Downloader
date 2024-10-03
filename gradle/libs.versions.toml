@@ -2,6 +2,8 @@
 agp = "8.5.2"
 coilCompose = "2.7.0"
 core = "12.1.1"
+coreSplashscreen = "1.0.1"
+dotlottieAndroid = "0.0.3"
 hiltAndroid = "2.51"
 hiltNavigationCompose = "1.0.0"
 kotlin = "1.9.0"
@@ -15,6 +17,7 @@ composeBom = "2024.09.02"
 chaquopy = "15.0.1"
 ksp-version = "1.9.10-1.0.13"
 hilt-version = "2.51"
+lottieCompose = "6.0.0"
 media3Ui = "1.4.1"
 navigationCompose = "2.8.1"
 roomRuntime = "2.6.1"
@@ -28,6 +31,7 @@ appcompat = "1.7.0"
 material = "1.12.0"
 
 [libraries]
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltNavigationCompose" }
 androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltNavigationCompose" }
 androidx-material3-android = { group = "androidx.compose.material3", name = "material3-android", version.ref = "material3Android" }
@@ -42,6 +46,7 @@ androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 core = { module = "com.pierfrancescosoffritti.androidyoutubeplayer:core", version.ref = "core" }
+dotlottie-android = { module = "com.github.LottieFiles:dotlottie-android", version.ref = "dotlottieAndroid" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt-version" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt-version" }
@@ -56,6 +61,7 @@ androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottieCompose" }
 ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "gson" }
