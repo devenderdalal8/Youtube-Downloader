@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.youtube.youtube_downloader.R
-import com.youtube.youtube_downloader.data.model.Video
+import com.youtube.domain.model.Video
 import com.youtube.youtube_downloader.presenter.MainViewModel
 import com.youtube.youtube_downloader.presenter.UiState
 import com.youtube.youtube_downloader.presenter.ui.screen.player.PlayerScreen

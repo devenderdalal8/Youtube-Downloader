@@ -32,7 +32,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.youtube.youtube_downloader.data.model.Video
+import com.youtube.domain.model.Video
 
 @SuppressLint("OpaqueUnitKey")
 @ExperimentalAnimationApi

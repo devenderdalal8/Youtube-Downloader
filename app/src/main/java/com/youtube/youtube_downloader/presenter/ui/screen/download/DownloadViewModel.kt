@@ -5,8 +5,8 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
-import com.youtube.youtube_downloader.domain.usecase.GetVideoResolutionUseCase
-import com.youtube.youtube_downloader.service.workManager.VideoDownloadService
+import com.youtube.domain.usecase.GetVideoResolutionUseCase
+import com.youtube.data.service.workManager.VideoDownloadService
 import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext

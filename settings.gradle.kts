@@ -22,3 +22,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Youtube Downloader"
 include(":app")
+include(":data")
+include(":domain")

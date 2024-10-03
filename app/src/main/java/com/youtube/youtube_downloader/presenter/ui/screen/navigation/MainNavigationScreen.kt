@@ -20,7 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
-import com.youtube.youtube_downloader.data.model.Video
+import com.youtube.domain.model.Video
 import com.youtube.youtube_downloader.presenter.MainViewModel
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.HomeScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.PlayListScreen

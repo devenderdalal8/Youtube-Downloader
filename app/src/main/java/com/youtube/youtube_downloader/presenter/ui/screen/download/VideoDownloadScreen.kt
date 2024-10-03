@@ -8,7 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.youtube.youtube_downloader.data.model.Video
+import com.youtube.domain.model.Video
 
 @Composable
 fun VideoDownloadScreen(videos: List<Video>, onPauseResumeClick: (Video) -> Unit) {
