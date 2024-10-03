@@ -37,7 +37,7 @@
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
         <service
-            android:name=".service.workManager.VideoDownloadService"
+            android:name="com.youtube.data.service.workManager.VideoDownloadService"
             android:foregroundServiceType="dataSync"
             android:exported="false"/>
     </application>

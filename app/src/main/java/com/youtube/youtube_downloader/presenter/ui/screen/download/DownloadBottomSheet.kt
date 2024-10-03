@@ -44,7 +44,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.youtube.youtube_downloader.R
-import com.youtube.youtube_downloader.data.model.Video
+import com.youtube.domain.model.Video
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeTypography
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_primary
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_primaryContainer

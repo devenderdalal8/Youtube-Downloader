@@ -3,7 +3,7 @@ package com.youtube.youtube_downloader.presenter
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.youtube.youtube_downloader.domain.usecase.GetVideoDetailsUseCase
+import com.youtube.domain.usecase.GetVideoDetailsUseCase
 import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
