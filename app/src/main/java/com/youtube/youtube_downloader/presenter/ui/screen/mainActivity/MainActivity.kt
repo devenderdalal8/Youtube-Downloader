@@ -1,4 +1,4 @@
-package com.youtube.youtube_downloader.presenter
+package com.youtube.youtube_downloader.presenter.ui.screen.mainActivity
 
 import android.content.Intent.ACTION_SEND
 import android.content.Intent.ACTION_VIEW
@@ -17,7 +17,6 @@ import androidx.navigation.compose.rememberNavController
 import com.youtube.youtube_downloader.presenter.ui.screen.navigation.MainNavigationScreen
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeDownloaderTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlin.math.log
 
 @AndroidEntryPoint
 class MainActivity: ComponentActivity() {

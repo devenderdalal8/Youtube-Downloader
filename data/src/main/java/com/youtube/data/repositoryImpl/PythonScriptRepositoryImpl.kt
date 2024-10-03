@@ -2,16 +2,25 @@ package com.youtube.data.repositoryImpl
 
 import com.chaquo.python.PyObject
 import com.youtube.domain.repository.PythonScriptRepository
+import com.youtube.domain.utils.Resource
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class PythonScriptRepositoryImpl @Inject constructor(
-    private val pythonService: PyObject
+    private val pythonService: PyObject,
+
 ) : PythonScriptRepository {
-    override suspend fun downloadAsync(functionName: String, vararg args: Any): Any {
-        val result: Any = callPythonFunction(functionName, *args)
-        return result
+    override suspend fun downloadAsync(functionName: String, vararg args: Any): Resource<Any> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val result = callPythonFunction(functionName, *args)
+                Resource.Success(result)
+            } catch (ex: Exception) {
+                Resource.Error(ex.message.toString())
+            }
+        }
     }
 
     private suspend fun callPythonFunction(functionName: String, vararg args: Any): Any {

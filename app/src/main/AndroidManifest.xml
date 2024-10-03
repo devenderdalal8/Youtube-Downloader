@@ -14,7 +14,7 @@
 
     <application
         android:allowBackup="true"
-        android:name=".presenter.MyApplication"
+        android:name=".presenter.ui.screen.mainActivity.MyApplication"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -23,7 +23,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.YoutubeDownloader">
         <activity
-            android:name=".presenter.MainActivity"
+            android:name=".presenter.ui.screen.mainActivity.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.YoutubeDownloader">
 

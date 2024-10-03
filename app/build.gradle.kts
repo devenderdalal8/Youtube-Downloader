@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    alias(libs.plugins.com.chaquo.python)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
@@ -17,9 +16,6 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
-        }
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -58,28 +54,6 @@ android {
     }
 }
 
-chaquopy {
-    defaultConfig {
-        version = "3.8"
-        buildPython("/usr/local/bin/python3")
-
-        pip {
-            install("pytubefix")
-            install("requests")
-        }
-
-        pyc {
-            src = false
-        }
-    }
-
-    sourceSets {
-        getByName("main") {
-            srcDir("src/main/python")
-        }
-    }
-}
-
 dependencies {
     implementation(project(path =  ":data"))
     implementation(project(path =  ":domain"))
@@ -93,12 +67,15 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.coil.compose)
     implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.lottie.compose)
     // hilt
     implementation (libs.androidx.hilt.navigation.compose)
     implementation (libs.androidx.work.runtime.ktx)
     implementation (libs.androidx.hilt.work)
     ksp (libs.androidx.hilt.compiler)
     implementation(libs.hilt.android)
+    implementation(libs.converter.gson)
     ksp(libs.hilt.compiler)
     implementation(libs.ui)
     implementation(libs.androidx.navigation.compose)
