@@ -3,6 +3,7 @@ package com.youtube.youtube_downloader.presenter.ui.theme
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+val size_0 = 0.dp
 val size_1 = 1.dp
 val size_2 = 2.dp
 val size_3 = 3.dp
