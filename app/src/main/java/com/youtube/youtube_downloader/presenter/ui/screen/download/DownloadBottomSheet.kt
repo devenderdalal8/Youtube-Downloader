@@ -43,8 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.youtube.youtube_downloader.R
 import com.youtube.domain.model.Video
+import com.youtube.youtube_downloader.R
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeTypography
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_primary
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_primaryContainer
@@ -62,7 +62,6 @@ import com.youtube.youtube_downloader.presenter.ui.theme.size_64
 import com.youtube.youtube_downloader.presenter.ui.theme.size_8
 import com.youtube.youtube_downloader.presenter.ui.theme.size_96
 import com.youtube.youtube_downloader.util.Constant
-import java.io.File
 
 @Composable
 fun DownloadBottomSheet(
@@ -71,13 +70,10 @@ fun DownloadBottomSheet(
     video: Video,
     viewModel: DownloadViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
-    val downloadedBytes = remember {
-        mutableIntStateOf(0)
-    }
     LaunchedEffect(key1 = video.videoId) {
         viewModel.getVideoDetails(video.resolution, video.baseUrl)
     }
+
     when (val uiState = viewModel.downloadVideoUiState.collectAsState().value) {
         is DownloadVideoUiState.Loading -> {
             Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -87,16 +83,17 @@ fun DownloadBottomSheet(
 
         is DownloadVideoUiState.Success -> {
             val data = uiState.data
-            MainDownloadBottomSheetScreen(modifier = modifier, data = data, video = video) { url ->
-                val filePath = File(
-                    context.getExternalFilesDir("/YoutubeDownloader/video/"),
-                    "${video.title}.mp4"
-                ).absolutePath
-
+            MainDownloadBottomSheetScreen(
+                modifier = modifier,
+                data = data,
+                video = video
+            ) { url ->
+                viewModel.pauseDownload()
                 viewModel.startDownload(
+                    fileName = video.title,
                     url = url,
-                    filePath = filePath,
                 )
+                viewModel.storeVideoLocally(video.copy( ))
             }
         }
     }
@@ -126,10 +123,8 @@ fun MainDownloadBottomSheetScreen(
             VideoQualities(modifier = modifier, resolutions = data) { url ->
                 videoUrl.value = url
             }
-            DownloadButtonView(
-                modifier = modifier,
-                onButtonClickListener = { onButtonClickListener(videoUrl.value) }
-            )
+            DownloadButtonView(modifier = modifier,
+                onButtonClickListener = { onButtonClickListener(videoUrl.value) })
             Mp3DownloadButtonView(modifier = modifier, onButtonClickListener = {})
         }
     }
@@ -184,9 +179,7 @@ fun DownloadButtonView(modifier: Modifier, onButtonClickListener: () -> Unit) {
 
 @Composable
 fun VideoQualities(
-    modifier: Modifier,
-    resolutions: List<VideoDetails>,
-    onClickListener: (String) -> Unit
+    modifier: Modifier, resolutions: List<VideoDetails>, onClickListener: (String) -> Unit
 ) {
     val isSelected = remember {
         mutableIntStateOf(-1)
@@ -267,24 +260,21 @@ fun ShowProfile(context: Context, modifier: Modifier, video: Video) {
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .background(gray_75),
-        shape = RoundedCornerShape(size_1)
+            .background(gray_75), shape = RoundedCornerShape(size_1)
     ) {
         Row(modifier = Modifier.padding(horizontal = size_16, vertical = size_8)) {
             Card(shape = RoundedCornerShape(16.dp), modifier = Modifier.size(size_64)) {
                 AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(video.thumbnailUrl).build(),
+                    model = ImageRequest.Builder(context).data(video.thumbnailUrl).build(),
                     contentDescription = "thumbnail",
                     modifier = modifier
                         .fillMaxSize()
                         .background(
-                            color = Color.Transparent,
-                            shape = RoundedCornerShape(size_8)
+                            color = Color.Transparent, shape = RoundedCornerShape(size_8)
                         )
                         .clip(RoundedCornerShape(size_8)),
                     contentScale = ContentScale.Crop
-                    )
+                )
             }
             Spacer(modifier = modifier.padding(end = size_8))
             Column {
@@ -296,8 +286,7 @@ fun ShowProfile(context: Context, modifier: Modifier, video: Video) {
                 Text(
                     text = stringResource(id = R.string.ready_to_save),
                     style = YoutubeTypography.titleSmall.copy(
-                        fontSize = font_12,
-                        color = dark_primary
+                        fontSize = font_12, color = dark_primary
                     )
                 )
 

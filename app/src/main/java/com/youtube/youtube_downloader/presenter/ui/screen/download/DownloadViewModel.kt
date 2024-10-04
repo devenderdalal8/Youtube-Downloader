@@ -1,15 +1,16 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.download
 
-import android.content.Context
-import android.content.Intent
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.WorkManager
+import com.youtube.domain.model.Video
+import com.youtube.domain.model.entity.LocalVideo
+import com.youtube.domain.repository.DownloadWorkerRepository
+import com.youtube.domain.repository.VideoLocalDataRepository
 import com.youtube.domain.usecase.GetVideoResolutionUseCase
-import com.youtube.data.service.workManager.VideoDownloadService
+import com.youtube.domain.utils.Resource
 import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,14 +20,18 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class DownloadViewModel @Inject constructor(
     private val getVideoResolutionUseCase: GetVideoResolutionUseCase,
-    private val workManager: WorkManager,
-    @ApplicationContext private val context: Context
+    private val workerRepository: DownloadWorkerRepository,
+    private val localDataRepository: VideoLocalDataRepository
 ) : ViewModel() {
+
+    private val _requestID = MutableStateFlow<UUID?>(null)
+    val requestId = _requestID.asStateFlow()
 
     private val _downloadVideoUiState =
         MutableStateFlow<DownloadVideoUiState>(DownloadVideoUiState.Loading)
@@ -38,40 +43,64 @@ class DownloadViewModel @Inject constructor(
             resolutions.sortedBy { it.length }.forEach { resolution ->
                 val url =
                     async { getVideoResolutionUseCase(videoUrl.toString(), resolution) }.await()
-                val size = url.getSize()
-                list.add(VideoDetails(resolution = resolution, url = url, size = size))
+                when (url) {
+                    is Resource.Success -> {
+                        val size = getSize(url.data.toString())
+                        list.add(
+                            VideoDetails(
+                                resolution = resolution, url = url.data.toString(), size = size
+                            )
+                        )
+                    }
+
+                    else -> {}
+                }
             }
             _downloadVideoUiState.value = DownloadVideoUiState.Success(list)
         }
     }
 
-    fun startDownload(url: String, filePath: String, downloadedBytes: Long = 0L) {
-        val intent = Intent(context, VideoDownloadService::class.java).apply {
-            putExtra("url", url)
-            putExtra("filePath", filePath)
-            putExtra("downloadedBytes", downloadedBytes) // Start from the last downloaded byte
+    fun storeVideoLocally(video: Video) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val localVideo = LocalVideo(
+                title = video.title,
+                thumbnailUrl = video.thumbnailUrl,
+                baseUrl = video.baseUrl,
+                downloadedPath = video.downloadedPath,
+                videoUrl = video.videoUrl,
+                duration = video.duration,
+                isDownloaded = false,
+                size = video.size
+            )
+            localDataRepository.insert(localVideo)
         }
-        context.startService(intent)
+    }
+
+    fun startDownload(url: String, downloadedBytes: Long = 0L, fileName: String? = "") {
+        viewModelScope.launch(Dispatchers.IO) {
+            workerRepository.startDownload(
+                fileName = fileName, url = url, downloadedBytes = downloadedBytes
+            )
+            _requestID.value = workerRepository.getRequestId()
+            Log.d("TAG", "startDownload: ${_requestID.value}")
+        }
     }
 
     fun pauseDownload() {
-        val intent = Intent(context, VideoDownloadService::class.java)
-        context.stopService(intent)
+        viewModelScope.launch(Dispatchers.IO) {
+            workerRepository.pauseDownload()
+        }
     }
 
-    fun resumeDownload(url: String, filePath: String, downloadedBytes: Long) {
-        startDownload(url, filePath, downloadedBytes) // Restart the service from the saved byte
-    }
-
-    private suspend fun String.getSize(): String {
+    private suspend fun getSize(videoUrl: String): String {
         return withContext(Dispatchers.IO) {
             try {
-                val url = URL(this@getSize)
+                val url = URL(videoUrl)
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "HEAD"
                 conn.contentLengthLong.getFileSize()
             } catch (e: IOException) {
-                "Error"
+                e.message.toString()
             }
         }
     }

@@ -17,6 +17,6 @@ data class VideoDetails(
     var size: String? = ""
 ){
     override fun toString(): String {
-        return "VideoDetails(resolution=$resolution, url=$url, size=$size)"
+        return "LocalVideo(resolution=$resolution, url=$url, size=$size)"
     }
 }

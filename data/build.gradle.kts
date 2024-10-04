@@ -87,9 +87,10 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.retrofit)
     ksp(libs.hilt.compiler)
+    ksp (libs.androidx.room.compiler)
     implementation(libs.converter.gson)
     implementation(libs.retrofit)
-
+    implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

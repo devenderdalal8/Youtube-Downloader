@@ -35,7 +35,7 @@ fun SplashScreen(
                     OvershootInterpolator(1f).getInterpolation(it)
                 })
         )
-        delay(3000L)
+        delay(2000L)
         onClickListener()
     }
 
