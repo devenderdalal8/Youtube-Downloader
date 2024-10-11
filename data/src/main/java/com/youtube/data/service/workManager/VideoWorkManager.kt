@@ -76,7 +76,7 @@ class VideoWorkManager @AssistedInject constructor(
                             throw Exception("Failed to download video")
                         }
 
-                        response.body()?.let { body ->
+                        response.body?.let { body ->
                             val inputStream = body.byteStream()
 
                             val buffer = ByteArray(1024 * 8)

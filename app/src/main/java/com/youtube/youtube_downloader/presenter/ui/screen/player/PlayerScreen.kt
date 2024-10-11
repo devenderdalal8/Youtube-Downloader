@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -41,7 +40,8 @@ fun PlayerScreen(
     video: Video,
     modifier: Modifier = Modifier,
     viewModel: PlayerViewModel = hiltViewModel(),
-    isDownloaded: Boolean
+    isDownloaded: Boolean = false,
+    onFullScreenChangeListener: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val progressBarVisibility = viewModel.progressBar.collectAsState().value
@@ -57,7 +57,9 @@ fun PlayerScreen(
             viewModel = viewModel,
             context = context,
             progressBarVisibility = progressBarVisibility
-        )
+        ) { isFullScreen ->
+            onFullScreenChangeListener(isFullScreen)
+        }
     } else {
         OnlineVideoPlayer(
             video = video,
@@ -65,7 +67,9 @@ fun PlayerScreen(
             viewModel = viewModel,
             context = context,
             progressBarVisibility = progressBarVisibility
-        )
+        ) { isFullScreen ->
+            onFullScreenChangeListener(isFullScreen)
+        }
     }
 }
 
@@ -76,7 +80,8 @@ fun OnlineVideoPlayer(
     modifier: Modifier = Modifier,
     viewModel: PlayerViewModel,
     context: Context,
-    progressBarVisibility: Boolean
+    progressBarVisibility: Boolean,
+    onFullScreenChangeListener: (Boolean) -> Unit
 ) {
     Box(
         modifier = modifier
@@ -94,11 +99,7 @@ fun OnlineVideoPlayer(
                     )
 
                     setFullscreenButtonClickListener { isFullScreen ->
-                        if (isFullScreen) {
-                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                        } else {
-                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                        }
+                        onFullScreenChangeListener(isFullScreen)
                     }
                     useController = true
                     setShowNextButton(false)
@@ -113,6 +114,10 @@ fun OnlineVideoPlayer(
             video = video, visibility = progressBarVisibility, isReleased = false
         )
     }
+}
+
+fun fullScreen(context: Context) {
+
 }
 
 @Composable

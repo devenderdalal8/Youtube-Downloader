@@ -88,12 +88,12 @@ fun DownloadBottomSheet(
                 data = data,
                 video = video
             ) { url ->
-                viewModel.pauseDownload()
-                viewModel.startDownload(
-                    fileName = video.title,
-                    url = url,
-                )
-                viewModel.storeVideoLocally(video.copy( ))
+//                viewModel.pauseDownload()
+//                viewModel.startDownload(
+//                    fileName = video.title,
+//                    url = url,
+//                )
+//                viewModel.storeVideoLocally(video.copy( ))
             }
         }
     }

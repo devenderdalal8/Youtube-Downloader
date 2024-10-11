@@ -3,6 +3,7 @@ package com.youtube.domain.model.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.youtube.domain.model.DownloadProgress
 import com.youtube.domain.utils.Constant.TABLE_NAME
 import java.util.UUID
 
