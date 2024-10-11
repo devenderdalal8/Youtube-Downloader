@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,12 +22,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.youtube.domain.model.Video
-import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.MainViewModel
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.HomeScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.PlayListScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.SearchScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.SettingScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.download.DownloadBottomSheet
+import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.MainViewModel
 import com.youtube.youtube_downloader.presenter.ui.screen.splashScreen.SplashScreen
 import com.youtube.youtube_downloader.util.BottomNavScreen
 import com.youtube.youtube_downloader.util.BottomSheet
@@ -77,6 +78,9 @@ fun MainNavigationScreen(
                         downloadResolution.value = videos
                         activeBottomSheet.value = BottomSheet.Download
                         coroutineScope.launch { downloadBottomSheetState.show() }
+                    },
+                    onFullScreenChangeListener = {
+
                     }
                 )
             }
@@ -92,7 +96,21 @@ fun MainNavigationScreen(
             composable(BottomNavScreen.Search.route) {
                 SearchScreen()
             }
+            composable(Route.Home.route) {
+                HomeScreen(
+                    videoUrl = "https://www.youtube.com/watch?v=ulZBNRlXW7A",
+                    viewModel = viewModel,
+                    isSearchable = true,
+                    onDownloadClicked = { videos ->
+                        downloadResolution.value = videos
+                        activeBottomSheet.value = BottomSheet.Download
+                        coroutineScope.launch { downloadBottomSheetState.show() }
+                    },
+                    onFullScreenChangeListener = {
 
+                    }
+                )
+            }
             composable(
                 route = "watch/{itemId}",
                 arguments = listOf(navArgument("itemId") { type = NavType.StringType }),
@@ -110,7 +128,7 @@ fun MainNavigationScreen(
                         downloadResolution.value = videos
                         activeBottomSheet.value = BottomSheet.Download
                         coroutineScope.launch { downloadBottomSheetState.show() }
-                    }
+                    }, onFullScreenChangeListener = {}
                 )
             }
         }

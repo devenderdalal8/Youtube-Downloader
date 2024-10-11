@@ -1,4 +1,4 @@
-package com.youtube.youtube_downloader.presenter.ui.screen.download
+package com.youtube.youtube_downloader.presenter.ui.screen.videoDownloaded
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

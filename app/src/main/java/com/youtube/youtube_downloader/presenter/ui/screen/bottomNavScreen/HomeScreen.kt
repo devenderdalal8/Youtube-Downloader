@@ -39,6 +39,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -48,8 +49,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.youtube.youtube_downloader.R
 import com.youtube.domain.model.Video
+import com.youtube.youtube_downloader.R
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.MainViewModel
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.UiState
 import com.youtube.youtube_downloader.presenter.ui.screen.player.PlayerScreen
@@ -66,7 +67,8 @@ fun HomeScreen(
     videoUrl: String = "",
     viewModel: MainViewModel,
     isSearchable: Boolean,
-    onDownloadClicked: (Video) -> Unit
+    onFullScreenChangeListener: (Boolean) -> Unit,
+    onDownloadClicked: (Video) -> Unit,
 ) {
     LaunchedEffect(key1 = videoUrl) {
         viewModel.getVideoDetails(videoUrl)
@@ -74,12 +76,16 @@ fun HomeScreen(
     val uiState = viewModel.videoDetails.collectAsState().value
     val fileSize = viewModel.size.collectAsState().value
     val query = remember { mutableStateOf("") }
+    val isFullScreen = remember {
+        mutableStateOf(false)
+    }
+
     val context = LocalContext.current
     when (uiState) {
         is UiState.Success -> {
             val data = uiState.data as Video
             Scaffold(floatingActionButton = {
-                if (data.videoUrl != null) {
+                if (data.videoUrl != null && !isFullScreen.value) {
                     FloatingActionButton(
                         onClick = { onDownloadClicked(data) },
                     ) {
@@ -94,10 +100,14 @@ fun HomeScreen(
                     modifier = Modifier.padding(paddingValue),
                     size = fileSize,
                     isSearchable = isSearchable,
+                    isFullScreen = isFullScreen.value,
                     query = query.value,
                     onValueListener = { search ->
                         query.value = search
-                    })
+                    }) { fullScreen ->
+                    onFullScreenChangeListener(fullScreen)
+                    isFullScreen.value = fullScreen
+                }
             }
         }
 
@@ -119,30 +129,44 @@ fun MainHomeScreen(
     video: Video,
     modifier: Modifier = Modifier,
     size: String,
+    isFullScreen: Boolean,
     onValueListener: (String) -> Unit,
     query: String,
-    isSearchable: Boolean
+    isSearchable: Boolean,
+    onFullScreenChangeListener: (Boolean) -> Unit,
 ) {
     Box(
         modifier = modifier.fillMaxSize()
     ) {
         Column(modifier = modifier) {
-            DefaultSearchBar(
-                modifier = modifier,
-                query = query,
-                onValueListener = onValueListener,
-                isSearchable = isSearchable
-            )
-            PlayerScreen(video = video, isDownloaded = true)
-            Spacer(modifier = modifier.padding(size_8))
-            Column(modifier = modifier.verticalScroll(rememberScrollState())) {
-                Title(title = video.title.toString(), thumbnailUrl = video.thumbnailUrl.toString())
+            if (isFullScreen) {
+                DefaultSearchBar(
+                    modifier = modifier,
+                    query = query,
+                    onValueListener = onValueListener,
+                    isSearchable = isSearchable
+                )
+            }
+            PlayerScreen(video = video, isDownloaded = false) { fullScreen ->
+                onFullScreenChangeListener(fullScreen)
+            }
+            if (isFullScreen) {
                 Spacer(modifier = modifier.padding(size_8))
-                HorizontalDivider(thickness = 1.dp)
-                Spacer(modifier = modifier.padding(size_8))
-                ShowVideoDetails(video = video, size = size)
-                HorizontalDivider(thickness = 1.dp, modifier = modifier.padding(vertical = size_8))
-                VideoDescription(description = video.description, modifier = modifier)
+                Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+                    Title(
+                        title = video.title.toString(),
+                        thumbnailUrl = video.thumbnailUrl.toString()
+                    )
+                    Spacer(modifier = modifier.padding(size_8))
+                    HorizontalDivider(thickness = 1.dp)
+                    Spacer(modifier = modifier.padding(size_8))
+                    ShowVideoDetails(video = video, size = size)
+                    HorizontalDivider(
+                        thickness = 1.dp,
+                        modifier = modifier.padding(vertical = size_8)
+                    )
+                    VideoDescription(description = video.description, modifier = modifier)
+                }
             }
         }
     }

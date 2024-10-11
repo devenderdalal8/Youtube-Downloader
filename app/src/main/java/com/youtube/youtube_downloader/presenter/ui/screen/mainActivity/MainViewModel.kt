@@ -1,5 +1,6 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.mainActivity
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +10,7 @@ import com.youtube.domain.usecase.GetVideoDetailsUseCase
 import com.youtube.domain.utils.Resource
 import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getVideoDetailsUseCase: GetVideoDetailsUseCase,
+    @ApplicationContext val context: Context
 ) : ViewModel() {
 
     private val _size = MutableStateFlow("")
@@ -37,6 +40,7 @@ class MainViewModel @Inject constructor(
                     is Resource.Success -> {
                         val data = Gson().fromJson(result.data.toString(), Video::class.java)
                         data.videoUrl?.getSize()
+                        Log.d("TAG", "getVideoDetails: ${data.videoUrl}")
                         _videoDetails.value = UiState.Success(data.copy(size = _size.value))
                     }
 

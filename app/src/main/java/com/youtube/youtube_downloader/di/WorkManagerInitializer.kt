@@ -1,9 +1,9 @@
 package com.youtube.youtube_downloader.di
 
-import android.app.NotificationManager
 import android.content.Context
 import androidx.startup.Initializer
 import androidx.work.Configuration
+import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
 import dagger.Module
 import dagger.Provides
@@ -11,6 +11,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -28,8 +29,4 @@ object WorkManagerInitializer : Initializer<WorkManager> {
         return emptyList()
     }
 
-    @Provides
-    fun provideNotificationManager(@ApplicationContext context: Context): NotificationManager {
-        return context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    }
 }
