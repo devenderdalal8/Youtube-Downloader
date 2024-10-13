@@ -45,7 +45,6 @@ class MainActivity: ComponentActivity() {
                     else -> null
                 }
                 itemId?.let { navController.navigate("watch/${it}") }
-                Log.d("TAG", "onCreate: $itemId")
             }
             YoutubeDownloaderTheme {
                 MainNavigationScreen(

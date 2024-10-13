@@ -2,6 +2,7 @@ package com.youtube.youtube_downloader.presenter.ui.screen.download
 
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -68,7 +69,8 @@ fun DownloadBottomSheet(
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit,
     video: Video,
-    viewModel: DownloadViewModel = hiltViewModel()
+    viewModel: DownloadViewModel = hiltViewModel(),
+    onButtonClickListener: () -> Unit
 ) {
     LaunchedEffect(key1 = video.videoId) {
         viewModel.getVideoDetails(video.resolution, video.baseUrl)
@@ -88,12 +90,18 @@ fun DownloadBottomSheet(
                 data = data,
                 video = video
             ) { url ->
-//                viewModel.pauseDownload()
-//                viewModel.startDownload(
-//                    fileName = video.title,
-//                    url = url,
-//                )
-//                viewModel.storeVideoLocally(video.copy( ))
+                if (viewModel.isVideoAvailable(video.baseUrl.toString())) {
+                    viewModel.startDownload(
+                        baseUrl = video.baseUrl.toString(),
+                        fileName = video.title,
+                        url = url,
+                    )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        viewModel.storeVideoLocally(video)
+                    }
+                }
+                onButtonClickListener()
+                onDismiss()
             }
         }
     }
@@ -300,6 +308,6 @@ fun ShowProfile(context: Context, modifier: Modifier, video: Video) {
 @Composable
 private fun DownloadPreview() {
     Box(modifier = Modifier) {
-        DownloadBottomSheet(onDismiss = {}, video = Video())
+        DownloadBottomSheet(onDismiss = {}, video = Video()) {}
     }
 }

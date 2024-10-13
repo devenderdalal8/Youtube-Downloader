@@ -1,25 +1,33 @@
 package com.youtube.domain.model.entity
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.room.ColumnInfo
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.youtube.domain.model.DownloadProgress
 import com.youtube.domain.utils.Constant.TABLE_NAME
-import java.util.UUID
+import java.time.LocalTime
 
 @Entity(tableName = TABLE_NAME)
-data class LocalVideo(
-    @PrimaryKey val id: String = UUID.randomUUID().toString(),
-    @ColumnInfo(name = "title") val title: String? = "",
-    @ColumnInfo(name = "description") val description: String? = "",
-    @ColumnInfo(name = "thumbnailUrl") val thumbnailUrl: String? = "",
-    @ColumnInfo(name = "videoUrl") val videoUrl: String? = "",
-    @ColumnInfo(name = "baseUrl") val baseUrl: String? = "",
-    @ColumnInfo(name = "videoId")val videoId: String? = "",
-    @ColumnInfo(name = "duration") val duration: String? = "",
+@RequiresApi(Build.VERSION_CODES.O)
+data class LocalVideo constructor(
+//    @PrimaryKey var id: String = UUID.randomUUID().toString(),
+    @PrimaryKey @ColumnInfo(name = "baseUrl") var baseUrl: String = "",
+    @ColumnInfo(name = "title") var title: String? = "",
+    @ColumnInfo(name = "description") var description: String? = "",
+    @ColumnInfo(name = "thumbnailUrl") var thumbnailUrl: String? = "",
+    @ColumnInfo(name = "videoUrl") var videoUrl: String? = "",
+    @ColumnInfo(name = "videoId") var videoId: String? = "",
+    @ColumnInfo(name = "duration") var duration: String? = "",
     @ColumnInfo(name = "size")var size: String? = "",
-    @ColumnInfo(name = "isDownloaded") var isDownloaded: Boolean = false,
+    @ColumnInfo(name = "workerId") var workerId: String? = "",
     @ColumnInfo(name = "downloadedPath") var downloadedPath: String? = "",
+    @ColumnInfo(name = "updatedTime") var updatedTime: LocalTime = LocalTime.now(),
+    @Embedded var downloadProgress: DownloadProgress = DownloadProgress.EMPTY
 ) {
-
+    override fun toString(): String {
+        return "LocalVideo(title=$title, description=$description, thumbnailUrl=$thumbnailUrl, videoUrl=$videoUrl, baseUrl=$baseUrl, videoId=$videoId, duration=$duration, size=$size, workerId=$workerId, downloadedPath=$downloadedPath, downloadProgress=$downloadProgress)"
+    }
 }

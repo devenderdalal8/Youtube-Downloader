@@ -1,8 +1,13 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.download
 
+import android.net.Uri
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.youtube.domain.model.DownloadProgress
+import com.youtube.domain.model.DownloadState
 import com.youtube.domain.model.Video
 import com.youtube.domain.model.entity.LocalVideo
 import com.youtube.domain.repository.DownloadWorkerRepository
@@ -60,26 +65,44 @@ class DownloadViewModel @Inject constructor(
         }
     }
 
+    fun isVideoAvailable(baseUrl: String): Boolean {
+        var result = false
+        viewModelScope.launch(Dispatchers.IO) {
+            result = localDataRepository.isVideoAvailable(baseUrl = baseUrl)
+        }
+        return result
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
     fun storeVideoLocally(video: Video) {
         viewModelScope.launch(Dispatchers.IO) {
             val localVideo = LocalVideo(
                 title = video.title,
                 thumbnailUrl = video.thumbnailUrl,
-                baseUrl = video.baseUrl,
+                baseUrl = video.baseUrl.toString(),
                 downloadedPath = video.downloadedPath,
                 videoUrl = video.videoUrl,
                 duration = video.duration,
-                isDownloaded = false,
-                size = video.size
+                size = video.size,
+                description = video.description,
+                videoId = video.videoId,
+                workerId = requestId.value.toString(),
+                downloadProgress = DownloadProgress(
+                    totalMegaBytes = video.length.toString(),
+                    totalBytes = video.length ?: 0L,
+                    percentage = 0,
+                    state = DownloadState.DOWNLOADING,
+                    uri = Uri.parse(video.videoUrl).toString()
+                )
             )
             localDataRepository.insert(localVideo)
         }
     }
 
-    fun startDownload(url: String, downloadedBytes: Long = 0L, fileName: String? = "") {
+    fun startDownload(url: String, downloadedBytes: Long = 0L, fileName: String? = "" ,baseUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
             workerRepository.startDownload(
-                fileName = fileName, url = url, downloadedBytes = downloadedBytes
+                fileName = fileName, url = url, downloadedBytes = downloadedBytes , baseUrl = baseUrl
             )
             _requestID.value = workerRepository.getRequestId()
             Log.d("TAG", "startDownload: ${_requestID.value}")

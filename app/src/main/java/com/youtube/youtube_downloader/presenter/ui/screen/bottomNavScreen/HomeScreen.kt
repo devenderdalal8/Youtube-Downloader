@@ -74,7 +74,7 @@ fun HomeScreen(
         viewModel.getVideoDetails(videoUrl)
     }
     val uiState = viewModel.videoDetails.collectAsState().value
-    val fileSize = viewModel.size.collectAsState().value
+    val fileSize = viewModel.size.collectAsState().value.first
     val query = remember { mutableStateOf("") }
     val isFullScreen = remember {
         mutableStateOf(false)

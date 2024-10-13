@@ -4,6 +4,7 @@ import java.util.UUID
 
 interface DownloadWorkerRepository {
     suspend fun startDownload(
+        baseUrl:String,
         url: String,
         downloadedBytes: Long,
         fileName: String?

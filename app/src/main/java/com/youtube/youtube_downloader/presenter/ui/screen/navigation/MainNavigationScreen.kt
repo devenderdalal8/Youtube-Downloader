@@ -13,7 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -29,6 +28,7 @@ import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.Settin
 import com.youtube.youtube_downloader.presenter.ui.screen.download.DownloadBottomSheet
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.MainViewModel
 import com.youtube.youtube_downloader.presenter.ui.screen.splashScreen.SplashScreen
+import com.youtube.youtube_downloader.presenter.ui.screen.videoDownloaded.VideoDownloadScreen
 import com.youtube.youtube_downloader.util.BottomNavScreen
 import com.youtube.youtube_downloader.util.BottomSheet
 import com.youtube.youtube_downloader.util.Route
@@ -88,7 +88,9 @@ fun MainNavigationScreen(
                 SettingScreen()
             }
             composable(BottomNavScreen.Download.route) {
-                PlayListScreen()
+                VideoDownloadScreen() {
+
+                }
             }
             composable(BottomNavScreen.PlayList.route) {
                 PlayListScreen()
@@ -151,7 +153,9 @@ fun MainNavigationScreen(
                                     downloadBottomSheetState.hide()
                                     activeBottomSheet.value = null
                                 }
-                            })
+                            }) {
+                            navController.navigate(BottomNavScreen.Download.route)
+                        }
                     }
                 }
                 else -> {}

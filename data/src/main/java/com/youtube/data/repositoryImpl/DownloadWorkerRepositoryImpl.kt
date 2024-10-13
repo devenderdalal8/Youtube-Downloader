@@ -19,12 +19,14 @@ class DownloadWorkerRepositoryImpl @Inject constructor(
     private var requestId: UUID? = null
 
     override suspend fun startDownload(
+        baseUrl:String,
         url: String,
         downloadedBytes: Long,
         fileName: String?
     ) {
         val inputData = Data.Builder()
             .putString("url", url)
+            .putString("baseUrl", baseUrl)
             .putString("fileName", fileName)
             .putLong("downloadedBytes", downloadedBytes)
             .build()
