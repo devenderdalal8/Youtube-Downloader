@@ -6,7 +6,6 @@ import android.content.Intent.EXTRA_TEXT
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -61,7 +60,6 @@ class MainActivity: ComponentActivity() {
             ACTION_VIEW -> {
 
                 intent.data?.let { uri ->
-                    Log.d("TAG", "handleUpcomingIntent: 1$uri")
                     extractAndNavigateToVideo(uri)
                 }
             }
@@ -72,7 +70,6 @@ class MainActivity: ComponentActivity() {
 
                 sharedText?.let {
                     val uri = Uri.parse(it)
-                    Log.d("TAG", "handleUpcomingIntent:2 $uri")
                     extractAndNavigateToVideo(uri)
                 }
             }
@@ -91,7 +88,6 @@ class MainActivity: ComponentActivity() {
 
             else -> null
         }
-        Log.d("TAG", "extractAndNavigateToVideo: $videoId")
     }
 
     private fun requestPermissions() {

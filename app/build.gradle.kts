@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.androidx.material3.android)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.startup.runtime)
     implementation(libs.lottie.compose)
     // hilt
     implementation (libs.androidx.hilt.navigation.compose)

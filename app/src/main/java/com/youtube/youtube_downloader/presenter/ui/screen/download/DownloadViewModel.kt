@@ -105,7 +105,6 @@ class DownloadViewModel @Inject constructor(
                 fileName = fileName, url = url, downloadedBytes = downloadedBytes , baseUrl = baseUrl
             )
             _requestID.value = workerRepository.getRequestId()
-            Log.d("TAG", "startDownload: ${_requestID.value}")
         }
     }
 

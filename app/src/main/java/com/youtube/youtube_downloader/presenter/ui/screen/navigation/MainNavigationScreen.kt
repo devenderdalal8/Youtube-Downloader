@@ -56,7 +56,7 @@ fun MainNavigationScreen(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Route.Splash.route,  // Splash screen as the start
+            startDestination = Route.Splash.route,
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)

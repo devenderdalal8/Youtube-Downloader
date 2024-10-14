@@ -16,9 +16,6 @@ import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.youtube.data.R
-import com.youtube.domain.model.DownloadState
-import com.youtube.domain.model.entity.LocalVideo
-import com.youtube.domain.repository.VideoLocalDataRepository
 import com.youtube.domain.utils.Constant.FILE_PATH
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -31,7 +28,6 @@ import okhttp3.Request
 class VideoWorkManager @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
-    private val localDataRepository: VideoLocalDataRepository
 ) : CoroutineWorker(context, workerParams) {
 
     private val okHttpClient: OkHttpClient by lazy {
@@ -44,11 +40,10 @@ class VideoWorkManager @AssistedInject constructor(
         val baseUrl = inputData.getString("baseUrl") ?: return Result.failure()
         val fileName = inputData.getString("fileName") ?: return Result.failure()
         val downloadBytes = inputData.getLong("downloadedBytes", 0)
-        val video = localDataRepository.videoByBaseUrl(baseUrl = baseUrl)
         setForeground(createForegroundInfo(0, fileName))
         return try {
-            downloadVideo(fileName, url, downloadBytes, baseUrl = baseUrl, video = video)
-            onDownloadComplete(fileName = fileName, video = video)
+            downloadVideo(fileName, url, downloadBytes, baseUrl = baseUrl)
+            onDownloadComplete(fileName = fileName)
             Result.success()
         } catch (ex: Exception) {
             Log.e("TAG", "doWork: ${ex.message}")
@@ -58,7 +53,10 @@ class VideoWorkManager @AssistedInject constructor(
 
     @RequiresApi(Build.VERSION_CODES.Q)
     private suspend fun downloadVideo(
-        fileName: String, url: String, startByte: Long, baseUrl: String, video: LocalVideo
+        fileName: String,
+        url: String,
+        startByte: Long,
+        baseUrl: String,
     ) {
         withContext(Dispatchers.IO) {
             val resolver = applicationContext.contentResolver
@@ -77,7 +75,6 @@ class VideoWorkManager @AssistedInject constructor(
                         }.build()
 
                         val response = okHttpClient.newCall(request).execute()
-                        Log.d("TAG", "downloadVideo: ${uri.path}")
                         if (!response.isSuccessful) {
                             throw Exception("Failed to download video")
                         }
@@ -101,9 +98,6 @@ class VideoWorkManager @AssistedInject constructor(
                                     lastProgress = progress
                                     setForeground(createForegroundInfo(progress, fileName))
                                 }
-                                if (progress - lastProgress >= 15) {
-                                    updateProgressLocally(video, progress, totalByteRead)
-                                }
                             }
                             outputStream?.close()
                             inputStream.close()
@@ -118,49 +112,13 @@ class VideoWorkManager @AssistedInject constructor(
                     }
                 } catch (ex: Exception) {
                     Log.e("DownloadError", "Failed to download video: ${ex.message}")
-                    failedToDownload(video)
                     throw ex
                 }finally {
                     if(fullPath ==null){
-                        Log.d("Download", "Deleting incomplete file")
                         resolver.delete(uri, null, null)
-                        deleteVideo(video)
                     }
                 }
             }
-        }
-    }
-
-    private suspend fun failedToDownload(video: LocalVideo) {
-        withContext(Dispatchers.IO) {
-            video.copy(
-                downloadProgress = video.downloadProgress.copy(
-                    state = DownloadState.FAILED
-                )
-            )
-            localDataRepository.update(video = video)
-        }
-    }
-
-    private suspend fun updateProgressLocally(
-        video: LocalVideo,
-        progress: Int,
-        totalByteRead: Long
-    ) {
-        withContext(Dispatchers.IO) {
-            video.copy(
-                downloadProgress = video.downloadProgress.copy(
-                    bytesDownloaded = totalByteRead,
-                    percentage = progress
-                )
-            )
-            localDataRepository.update(video = video)
-        }
-    }
-
-    private suspend fun deleteVideo(video: LocalVideo) {
-        withContext(Dispatchers.IO) {
-            localDataRepository.delete(video)
         }
     }
 
@@ -183,14 +141,9 @@ class VideoWorkManager @AssistedInject constructor(
         return ForegroundInfo(1, notification)
     }
 
-    private suspend fun onDownloadComplete(fileName: String, video: LocalVideo) {
+    private suspend fun onDownloadComplete(fileName: String) {
         withContext(Dispatchers.IO) {
             showCompleteNotification(fileName)
-            video.copy(
-                downloadProgress = video.downloadProgress.copy(
-                    state = DownloadState.COMPLETED
-                )
-            )
         }
     }
 

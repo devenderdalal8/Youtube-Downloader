@@ -90,7 +90,7 @@ fun DownloadBottomSheet(
                 data = data,
                 video = video
             ) { url ->
-                if (viewModel.isVideoAvailable(video.baseUrl.toString())) {
+                if (!viewModel.isVideoAvailable(video.baseUrl.toString())) {
                     viewModel.startDownload(
                         baseUrl = video.baseUrl.toString(),
                         fileName = video.title,

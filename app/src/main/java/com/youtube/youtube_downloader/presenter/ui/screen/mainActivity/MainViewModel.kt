@@ -32,7 +32,6 @@ class MainViewModel @Inject constructor(
     private val _videoDetails = MutableStateFlow<UiState>(UiState.Loading)
     val videoDetails = _videoDetails.asStateFlow()
 
-
     fun getVideoDetails(url: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -41,7 +40,6 @@ class MainViewModel @Inject constructor(
                         val data = Gson().fromJson(result.data.toString(), Video::class.java)
                         data.videoUrl?.getSize()
 
-                        Log.d("TAG", "getVideoDetails: ${size.value.first} => ${size.value.second}")
                         _videoDetails.value = UiState.Success(
                             data.copy(
                                 size = _size.value.first,

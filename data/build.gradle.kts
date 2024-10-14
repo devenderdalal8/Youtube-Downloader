@@ -25,6 +25,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        javaCompileOptions.annotationProcessorOptions.arguments["dagger.hilt.disableModulesHaveInstallInCheck"] =
+            "true"
     }
 
     buildTypes {
@@ -83,11 +85,12 @@ dependencies {
     implementation (libs.androidx.hilt.navigation.compose)
     implementation (libs.androidx.work.runtime.ktx)
     implementation (libs.androidx.hilt.work)
-    implementation(libs.androidx.media3.exoplayer)
     ksp (libs.androidx.hilt.compiler)
+    ksp(libs.hilt.compiler)
+    annotationProcessor(libs.androidx.hilt.compiler)
     implementation(libs.hilt.android)
     implementation(libs.retrofit)
-    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.datasource.cronet)
     implementation(libs.androidx.media3.datasource.okhttp)

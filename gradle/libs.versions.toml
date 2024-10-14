@@ -4,8 +4,7 @@ coilCompose = "2.7.0"
 core = "12.1.1"
 coreSplashscreen = "1.0.1"
 dotlottieAndroid = "0.0.3"
-hiltAndroid = "2.51"
-hiltNavigationCompose = "1.0.0"
+hiltNavigationCompose = "1.2.0"
 hilt-version = "2.51"
 kotlin = "1.9.0"
 coreKtx = "1.13.1"
@@ -18,10 +17,11 @@ composeBom = "2024.09.02"
 chaquopy = "15.0.1"
 ksp-version = "1.9.10-1.0.13"
 lottieCompose = "6.0.0"
+materialVersion = "1.8.0-alpha01"
 media3Ui = "1.4.1"
 navigationCompose = "2.8.1"
-roomCompiler = "2.5.0"
 roomRuntime = "2.6.1"
+startupRuntime = "1.2.0"
 ui = "1.7.2"
 webkit = "1.12.0"
 retrofit = "2.10.0"
@@ -38,6 +38,7 @@ androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltNa
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-media3-datasource-cronet = { module = "androidx.media3:media3-datasource-cronet", version.ref = "media3Ui" }
 androidx-media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "media3Ui" }
+androidx-startup-runtime = { module = "androidx.startup:startup-runtime", version.ref = "startupRuntime" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt-version" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt-version" }
 androidx-material3-android = { group = "androidx.compose.material3", name = "material3-android", version.ref = "material3Android" }
@@ -52,7 +53,6 @@ androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 core = { module = "com.pierfrancescosoffritti.androidyoutubeplayer:core", version.ref = "core" }
-dotlottie-android = { module = "com.github.LottieFiles:dotlottie-android", version.ref = "dotlottieAndroid" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

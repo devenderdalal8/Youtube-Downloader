@@ -1,5 +1,6 @@
 package com.youtube.data.repositoryImpl
 
+import android.util.Log
 import com.youtube.data.dao.VideoDao
 import com.youtube.domain.model.entity.LocalVideo
 import com.youtube.domain.repository.VideoLocalDataRepository
@@ -15,12 +16,14 @@ class VideoLocalDataRepositoryImpl @Inject constructor(
     override suspend fun insert(video: LocalVideo) {
         withContext(Dispatchers.IO) {
             videoDao.insert(video)
+            Log.e("TAG", "insert: $video", )
         }
     }
 
     override suspend fun update(video: LocalVideo) {
         withContext(Dispatchers.IO) {
             videoDao.update(video)
+            Log.e("TAG", "update: $video", )
         }
     }
 
