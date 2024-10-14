@@ -1,5 +1,6 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.download
 
+import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.util.Log
@@ -10,10 +11,11 @@ import com.youtube.domain.model.DownloadProgress
 import com.youtube.domain.model.DownloadState
 import com.youtube.domain.model.Video
 import com.youtube.domain.model.entity.LocalVideo
-import com.youtube.domain.repository.DownloadWorkerRepository
 import com.youtube.domain.repository.VideoLocalDataRepository
 import com.youtube.domain.usecase.GetVideoResolutionUseCase
 import com.youtube.domain.utils.Resource
+import com.youtube.youtube_downloader.presenter.ui.screen.navigation.pauseDownloadService
+import com.youtube.youtube_downloader.presenter.ui.screen.navigation.startDownloadService
 import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -31,11 +33,10 @@ import javax.inject.Inject
 @HiltViewModel
 class DownloadViewModel @Inject constructor(
     private val getVideoResolutionUseCase: GetVideoResolutionUseCase,
-    private val workerRepository: DownloadWorkerRepository,
     private val localDataRepository: VideoLocalDataRepository
 ) : ViewModel() {
 
-    private val _requestID = MutableStateFlow<UUID?>(null)
+    private val _requestID = MutableStateFlow<UUID>(UUID.randomUUID())
     val requestId = _requestID.asStateFlow()
 
     private val _downloadVideoUiState =
@@ -74,7 +75,7 @@ class DownloadViewModel @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun storeVideoLocally(video: Video) {
+    fun storeVideoLocally(video: Video, id: UUID) {
         viewModelScope.launch(Dispatchers.IO) {
             val localVideo = LocalVideo(
                 title = video.title,
@@ -86,7 +87,7 @@ class DownloadViewModel @Inject constructor(
                 size = video.size,
                 description = video.description,
                 videoId = video.videoId,
-                workerId = requestId.value.toString(),
+                workerId = id,
                 downloadProgress = DownloadProgress(
                     totalMegaBytes = video.length.toString(),
                     totalBytes = video.length ?: 0L,
@@ -96,23 +97,35 @@ class DownloadViewModel @Inject constructor(
                 )
             )
             localDataRepository.insert(localVideo)
+            Log.e("TAG", "storeVideoLocally:workerId ${localVideo.workerId}")
         }
     }
 
-    fun startDownload(url: String, downloadedBytes: Long = 0L, fileName: String? = "" ,baseUrl: String) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun startDownload(
+        context: Context,
+        url: String,
+        downloadedBytes: Long = 0L,
+        fileName: String? = "",
+        baseUrl: String,
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
-            workerRepository.startDownload(
-                fileName = fileName, url = url, downloadedBytes = downloadedBytes , baseUrl = baseUrl
+            context.pauseVideoService()
+            context.startDownloadService(
+                url = url,
+                downloadedBytes = downloadedBytes,
+                baseUrl = baseUrl,
+                fileName = fileName.toString()
             )
-            _requestID.value = workerRepository.getRequestId()
         }
     }
 
-    fun pauseDownload() {
+    private fun Context.pauseVideoService() {
         viewModelScope.launch(Dispatchers.IO) {
-            workerRepository.pauseDownload()
+            pauseDownloadService()
         }
     }
+
 
     private suspend fun getSize(videoUrl: String): String {
         return withContext(Dispatchers.IO) {

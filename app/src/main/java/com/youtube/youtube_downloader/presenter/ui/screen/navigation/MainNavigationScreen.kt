@@ -1,5 +1,6 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.navigation
 
+import android.os.Build
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -88,8 +89,9 @@ fun MainNavigationScreen(
                 SettingScreen()
             }
             composable(BottomNavScreen.Download.route) {
-                VideoDownloadScreen() {
-
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    VideoDownloadScreen() {
+                    }
                 }
             }
             composable(BottomNavScreen.PlayList.route) {
@@ -145,16 +147,18 @@ fun MainNavigationScreen(
             when (activeBottomSheet.value) {
                 BottomSheet.Download -> {
                     downloadResolution.value?.let {
-                        DownloadBottomSheet(
-                            modifier = modifier,
-                            video = it,
-                            onDismiss = {
-                                coroutineScope.launch {
-                                    downloadBottomSheetState.hide()
-                                    activeBottomSheet.value = null
-                                }
-                            }) {
-                            navController.navigate(BottomNavScreen.Download.route)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            DownloadBottomSheet(
+                                modifier = modifier,
+                                video = it,
+                                onDismiss = {
+                                    coroutineScope.launch {
+                                        downloadBottomSheetState.hide()
+                                        activeBottomSheet.value = null
+                                    }
+                                }) {
+                                navController.navigate(BottomNavScreen.Download.route)
+                            }
                         }
                     }
                 }

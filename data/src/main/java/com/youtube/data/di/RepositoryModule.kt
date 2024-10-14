@@ -2,8 +2,8 @@ package com.youtube.data.di
 
 import com.youtube.data.repositoryImpl.VideoLocalDataRepositoryImpl
 import com.youtube.domain.repository.VideoLocalDataRepository
+import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
@@ -11,11 +11,10 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-class RepositoryModule {
+abstract class RepositoryModule {
 
-    @Provides
+    @Binds
     @Singleton
-    fun provideLocalDataRepository(repository: VideoLocalDataRepositoryImpl): VideoLocalDataRepository {
-        return repository
-    }
+    abstract fun provideLocalDataRepository(repository: VideoLocalDataRepositoryImpl): VideoLocalDataRepository
+
 }

@@ -9,11 +9,11 @@ import androidx.room.PrimaryKey
 import com.youtube.domain.model.DownloadProgress
 import com.youtube.domain.utils.Constant.TABLE_NAME
 import java.time.LocalTime
+import java.util.UUID
 
 @Entity(tableName = TABLE_NAME)
 @RequiresApi(Build.VERSION_CODES.O)
 data class LocalVideo constructor(
-//    @PrimaryKey var id: String = UUID.randomUUID().toString(),
     @PrimaryKey @ColumnInfo(name = "baseUrl") var baseUrl: String = "",
     @ColumnInfo(name = "title") var title: String? = "",
     @ColumnInfo(name = "description") var description: String? = "",
@@ -22,7 +22,7 @@ data class LocalVideo constructor(
     @ColumnInfo(name = "videoId") var videoId: String? = "",
     @ColumnInfo(name = "duration") var duration: String? = "",
     @ColumnInfo(name = "size")var size: String? = "",
-    @ColumnInfo(name = "workerId") var workerId: String? = "",
+    @ColumnInfo(name = "workerId") var workerId: UUID = UUID.fromString(""),
     @ColumnInfo(name = "downloadedPath") var downloadedPath: String? = "",
     @ColumnInfo(name = "updatedTime") var updatedTime: LocalTime = LocalTime.now(),
     @Embedded var downloadProgress: DownloadProgress = DownloadProgress.EMPTY
