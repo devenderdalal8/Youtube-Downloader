@@ -90,8 +90,7 @@ fun MainNavigationScreen(
             }
             composable(BottomNavScreen.Download.route) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    VideoDownloadScreen() {
-                    }
+                    VideoDownloadScreen()
                 }
             }
             composable(BottomNavScreen.PlayList.route) {

@@ -4,7 +4,7 @@ import android.net.Uri
 
 data class DownloadProgress(
     var megaBytesDownloaded: String = "0",
-    var percentage: Int = 0,
+    var progress: Int = 0,
     var percentageDisplay: String = "0",
     var totalMegaBytes: String = "0",
     var bytesDownloaded: Long = 0L,
@@ -16,7 +16,7 @@ data class DownloadProgress(
         val EMPTY: DownloadProgress
             get() = DownloadProgress(
                 megaBytesDownloaded = "0",
-                percentage = 0,
+                progress = 0,
                 percentageDisplay = "0",
                 totalMegaBytes = "0",
                 bytesDownloaded = 0L,
@@ -27,7 +27,7 @@ data class DownloadProgress(
     }
 
     override fun toString(): String {
-        return "DownloadProgress(megaBytesDownloaded='$megaBytesDownloaded', percentage=$percentage, percentageDisplay='$percentageDisplay', totalMegaBytes='$totalMegaBytes', bytesDownloaded=$bytesDownloaded, totalBytes=$totalBytes, state=$state, uri='$uri')"
+        return "DownloadProgress(megaBytesDownloaded='$megaBytesDownloaded', percentage=$progress, percentageDisplay='$percentageDisplay', totalMegaBytes='$totalMegaBytes', bytesDownloaded=$bytesDownloaded, totalBytes=$totalBytes, state=$state, uri='$uri')"
     }
 
 }

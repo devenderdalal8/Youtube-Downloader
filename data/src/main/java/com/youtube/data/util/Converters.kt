@@ -7,14 +7,12 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.youtube.domain.model.DownloadProgress
 import com.youtube.domain.model.DownloadState
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 class Converters {
     private val gson = Gson()
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private val formatter = DateTimeFormatter.ISO_LOCAL_TIME
 
 
     @TypeConverter
@@ -48,20 +46,5 @@ class Converters {
     fun fromDownloadState(state: String): DownloadState {
         val type = object : TypeToken<DownloadState>() {}.type
         return gson.fromJson(state, type)
-    }
-
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    @TypeConverter
-    fun fromLocalTime(localTime: LocalTime?): String? {
-        return localTime?.format(formatter)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    @TypeConverter
-    fun toLocalTime(timeString: String?): LocalTime? {
-        return timeString?.let {
-            LocalTime.parse(it, formatter)
-        }
     }
 }

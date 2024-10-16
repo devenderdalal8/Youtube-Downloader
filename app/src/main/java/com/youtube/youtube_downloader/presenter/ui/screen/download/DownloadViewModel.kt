@@ -2,9 +2,6 @@ package com.youtube.youtube_downloader.presenter.ui.screen.download
 
 import android.content.Context
 import android.net.Uri
-import android.os.Build
-import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.youtube.domain.model.DownloadProgress
@@ -35,9 +32,6 @@ class DownloadViewModel @Inject constructor(
     private val getVideoResolutionUseCase: GetVideoResolutionUseCase,
     private val localDataRepository: VideoLocalDataRepository
 ) : ViewModel() {
-
-    private val _requestID = MutableStateFlow<UUID>(UUID.randomUUID())
-    val requestId = _requestID.asStateFlow()
 
     private val _downloadVideoUiState =
         MutableStateFlow<DownloadVideoUiState>(DownloadVideoUiState.Loading)
@@ -74,7 +68,6 @@ class DownloadViewModel @Inject constructor(
         return result
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun storeVideoLocally(video: Video, id: UUID) {
         viewModelScope.launch(Dispatchers.IO) {
             val localVideo = LocalVideo(
@@ -91,17 +84,15 @@ class DownloadViewModel @Inject constructor(
                 downloadProgress = DownloadProgress(
                     totalMegaBytes = video.length.toString(),
                     totalBytes = video.length ?: 0L,
-                    percentage = 0,
+                    progress = 0,
                     state = DownloadState.DOWNLOADING,
                     uri = Uri.parse(video.videoUrl).toString()
                 )
             )
             localDataRepository.insert(localVideo)
-            Log.e("TAG", "storeVideoLocally:workerId ${localVideo.workerId}")
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun startDownload(
         context: Context,
         url: String,

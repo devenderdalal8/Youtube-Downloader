@@ -22,6 +22,7 @@ class VideoLocalDataRepositoryImpl @Inject constructor(
     override suspend fun update(video: LocalVideo) {
         withContext(Dispatchers.IO) {
             videoDao.update(video)
+            Log.d("TAG", "update: ${video.downloadProgress}")
         }
     }
 
@@ -33,7 +34,7 @@ class VideoLocalDataRepositoryImpl @Inject constructor(
 
     override suspend fun getVideos(): Flow<List<LocalVideo>> {
         return withContext(Dispatchers.IO) {
-            flowOf(videoDao.getVideos().sortedByDescending { it.updatedTime })
+            flowOf(videoDao.getVideos())
         }
     }
 

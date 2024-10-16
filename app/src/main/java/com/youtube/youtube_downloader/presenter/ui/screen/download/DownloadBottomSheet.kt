@@ -66,7 +66,6 @@ import com.youtube.youtube_downloader.presenter.ui.theme.size_96
 import com.youtube.youtube_downloader.util.Constant
 import java.util.UUID
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DownloadBottomSheet(
     modifier: Modifier = Modifier,
@@ -79,7 +78,6 @@ fun DownloadBottomSheet(
     LaunchedEffect(key1 = video.videoId) {
         viewModel.getVideoDetails(video.resolution, video.baseUrl)
     }
-
     when (val uiState = viewModel.downloadVideoUiState.collectAsState().value) {
         is DownloadVideoUiState.Loading -> {
             Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {

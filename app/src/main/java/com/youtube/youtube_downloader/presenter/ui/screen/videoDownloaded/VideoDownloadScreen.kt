@@ -1,12 +1,12 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.videoDownloaded
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.IntentFilter
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -56,7 +55,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.youtube.domain.model.DownloadState
-import com.youtube.domain.model.Video
 import com.youtube.domain.model.entity.LocalVideo
 import com.youtube.domain.utils.Constant.DOWNLOAD_COMPLETE
 import com.youtube.domain.utils.Constant.PROGRESS_DATA
@@ -68,33 +66,31 @@ import com.youtube.youtube_downloader.presenter.ui.theme.font_12
 import com.youtube.youtube_downloader.presenter.ui.theme.size_0
 import com.youtube.youtube_downloader.presenter.ui.theme.size_14
 import com.youtube.youtube_downloader.presenter.ui.theme.size_16
-import com.youtube.youtube_downloader.presenter.ui.theme.size_18
-import com.youtube.youtube_downloader.presenter.ui.theme.size_20
+import com.youtube.youtube_downloader.presenter.ui.theme.size_24
 import com.youtube.youtube_downloader.presenter.ui.theme.size_30
 import com.youtube.youtube_downloader.presenter.ui.theme.size_32
-import com.youtube.youtube_downloader.presenter.ui.theme.size_5
 import com.youtube.youtube_downloader.presenter.ui.theme.size_8
 import com.youtube.youtube_downloader.presenter.ui.theme.size_80
 import com.youtube.youtube_downloader.presenter.ui.theme.size_84
 import com.youtube.youtube_downloader.util.getFileSize
 
-@RequiresApi(Build.VERSION_CODES.O)
+@SuppressLint("UnspecifiedRegisterReceiverFlag")
 @Composable
 fun VideoDownloadScreen(
-    modifier: Modifier = Modifier,
-    viewModel: VideoDownloadViewModel = hiltViewModel(),
-    onPauseResumeClick: (Video) -> Unit
+    modifier: Modifier = Modifier, viewModel: VideoDownloadViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val downloadState = remember {
-        mutableStateOf(DownloadState.DOWNLOADING)
-    }
 
     LaunchedEffect(Unit) {
         val mIntentFilter = IntentFilter()
         mIntentFilter.addAction(PROGRESS_DATA)
         mIntentFilter.addAction(DOWNLOAD_COMPLETE)
-        context.registerReceiver(viewModel.mReceiver, mIntentFilter, Context.RECEIVER_NOT_EXPORTED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.registerReceiver(viewModel.mReceiver, mIntentFilter, Context.RECEIVER_NOT_EXPORTED)
+        }else{
+            context.registerReceiver(viewModel.mReceiver, mIntentFilter)
+
+        }
     }
 
     DisposableEffect(Unit) {
@@ -113,57 +109,10 @@ fun VideoDownloadScreen(
         }
 
         is UiState.Success -> {
-            val videos = (result.data as List<LocalVideo>)
-            VideoScreen(
-                modifier = modifier,
-                videos = videos,
-                onRemove = { position ->
-                    viewModel.deleteVideo(position)
-                },
-                onLike = { position -> },
-                progress = progress,
-                onPauseClickListener = { state, video ->
-                    downloadState.value = state
-                    viewModel.updateVideo(
-                        video.copy(
-                            downloadProgress = video.downloadProgress.copy(
-                                state = state
-                            )
-                        )
-                    )
-                    when (state) {
-                        DownloadState.PAUSED -> {
-                            viewModel.resumeDownload(
-                                context = context,
-                                url = video.videoUrl.toString(),
-                                downloadedBytes = video.downloadProgress.bytesDownloaded,
-                                fileName = video.title,
-                                baseUrl = video.baseUrl
-                            )
-                            viewModel.updateVideo(
-                                video.copy(
-                                    downloadProgress = video.downloadProgress.copy(
-                                        state = DownloadState.DOWNLOADING
-                                    )
-                                )
-                            )
-                        }
-
-                        DownloadState.COMPLETED -> {}
-                        DownloadState.DOWNLOADING -> {
-                            viewModel.pauseVideoService(context = context)
-                            viewModel.updateVideo(
-                                video.copy(
-                                    downloadProgress = video.downloadProgress.copy(
-                                        state = DownloadState.PAUSED
-                                    )
-                                )
-                            )
-                        }
-
-                        else -> {}
-                    }
-                },
+            val videos = result.data as List<LocalVideo>
+            VideoScreen(modifier = modifier, videos = videos, onRemove = { position ->
+                viewModel.deleteVideo(position)
+            }, onLike = {}, progress = progress, viewModel = viewModel
             )
         }
     }
@@ -176,7 +125,7 @@ fun VideoScreen(
     onRemove: (Int) -> Unit,
     onLike: (Int) -> Unit,
     progress: Triple<Float, Long, String>,
-    onPauseClickListener: (DownloadState, LocalVideo) -> Unit,
+    viewModel: VideoDownloadViewModel,
 ) {
     LazyColumn {
         itemsIndexed(videos) { index, video ->
@@ -198,15 +147,15 @@ fun VideoScreen(
                 }
                 return@rememberSwipeToDismissBoxState true
             }, positionalThreshold = { it * .25f })
+
             SwipeToDismissBox(state = dismissState,
                 modifier = modifier,
                 backgroundContent = { DismissBackground(dismissState) },
                 content = {
                     VideoItemView(
                         video = video,
-                        modifier = modifier,
-                        progress = progress,
-                        onPauseClickListener = { state -> onPauseClickListener(state, video) })
+                        modifier = modifier, progress = progress, viewModel = viewModel
+                    )
                 })
         }
     }
@@ -228,13 +177,9 @@ fun DismissBackground(dismissState: SwipeToDismissBoxState) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Icon(
-            Icons.Default.Delete, contentDescription = "delete"
-        )
+        Icon(Icons.Default.Delete, contentDescription = "delete")
         Spacer(modifier = Modifier)
-        Icon(
-            imageVector = Icons.Default.Favorite, contentDescription = "Archive"
-        )
+        Icon(imageVector = Icons.Default.Favorite, contentDescription = "Archive")
     }
 }
 
@@ -243,8 +188,13 @@ fun VideoItemView(
     modifier: Modifier = Modifier,
     video: LocalVideo,
     progress: Triple<Float, Long, String>,
-    onPauseClickListener: (DownloadState) -> Unit,
+    viewModel: VideoDownloadViewModel,
 ) {
+    val context = LocalContext.current
+    val downloadState = remember {
+        mutableStateOf(video.downloadProgress.state)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -255,7 +205,7 @@ fun VideoItemView(
             ShowImage(
                 modifier = modifier.padding(horizontal = size_16),
                 imageUrl = video.thumbnailUrl.toString(),
-                state = video.downloadProgress.state
+                shouldVisible = video.downloadProgress.progress == 100
             )
             ShowTitle(
                 modifier = modifier
@@ -264,8 +214,42 @@ fun VideoItemView(
                 video = video,
                 progress = progress
             )
-            ShowPlayPauseIcon(modifier = modifier, state = video.downloadProgress.state) {
-                onPauseClickListener(it)
+            if (video.downloadProgress.progress != 100) {
+                ShowPlayPauseIcon(modifier = modifier, state = video.downloadProgress.state) {
+                    when (downloadState.value) {
+                        DownloadState.PAUSED -> {
+                            viewModel.resumeDownload(
+                                context = context,
+                                url = video.videoUrl.toString(),
+                                downloadedBytes = video.downloadProgress.bytesDownloaded,
+                                fileName = video.title,
+                                baseUrl = video.baseUrl
+                            )
+                            downloadState.value = DownloadState.DOWNLOADING // Update the state
+                        }
+
+                        DownloadState.DOWNLOADING -> {
+                            viewModel.pauseVideoService(
+                                context = context, baseUrl = video.baseUrl
+                            )
+                            downloadState.value = DownloadState.PAUSED // Update the state
+                        }
+
+                        DownloadState.FAILED -> {
+                            viewModel.resumeDownload(
+                                context = context,
+                                url = video.videoUrl.toString(),
+                                downloadedBytes = video.downloadProgress.bytesDownloaded,
+                                fileName = video.title,
+                                baseUrl = video.baseUrl
+                            )
+                            downloadState.value = DownloadState.DOWNLOADING // Update the state
+                        }
+
+                        else -> {}
+
+                    }
+                }
             }
         }
     }
@@ -273,9 +257,7 @@ fun VideoItemView(
 
 @Composable
 fun ShowPlayPauseIcon(
-    modifier: Modifier,
-    state: DownloadState,
-    onPauseResumeClick: (DownloadState) -> Unit
+    modifier: Modifier, state: DownloadState, onPauseResumeClick: (DownloadState) -> Unit
 ) {
     Box(
         modifier = modifier
@@ -285,20 +267,20 @@ fun ShowPlayPauseIcon(
     ) {
         Row {
             if (state != DownloadState.COMPLETED) {
-                IconButton(modifier = modifier.size(size_30), onClick = {}) {
+                IconButton(
+                    modifier = modifier.size(size_30),
+                    onClick = { onPauseResumeClick(state) }) {
                     Icon(
                         painter = painterResource(
-                        id = when (state) {
-                            DownloadState.DOWNLOADING -> R.drawable.ic_play_arrow_icon
-                            DownloadState.PAUSED -> R.drawable.ic_pause_icon
-                            DownloadState.FAILED -> R.drawable.ic_refresh_icon
-                            else -> R.drawable.ic_refresh_icon
-                        }
+                            id = when (state) {
+                                DownloadState.DOWNLOADING -> R.drawable.ic_play_arrow_icon
+                                DownloadState.PAUSED -> R.drawable.ic_pause_icon
+                                DownloadState.FAILED -> R.drawable.ic_refresh_icon
+                                else -> R.drawable.ic_refresh_icon
+                            }
                         ),
                         contentDescription = "Play Icon",
-                        modifier = modifier.clickable {
-                            onPauseResumeClick(state)
-                    })
+                    )
                 }
             }
         }
@@ -314,64 +296,78 @@ fun ShowTitle(modifier: Modifier, video: LocalVideo, progress: Triple<Float, Lon
                 fontWeight = FontWeight.W700,
             ), maxLines = 2, overflow = TextOverflow.Ellipsis
         )
-        Spacer(modifier = modifier.height(size_8))
-        if (progress.third.isNotEmpty() && progress.second != 0L) {
-            Text(
-                text = "${progress.second.getFileSize()} / ${progress.third}",
-                style = YoutubeTypography.titleSmall.copy(
-                    fontSize = font_12, fontWeight = FontWeight.W700
+        if (video.downloadProgress.progress != 100) {
+            if (progress.third.isNotEmpty() && progress.second != 0L) {
+                Spacer(modifier = modifier.height(size_8))
+                Text(
+                    text = "${progress.second.getFileSize()} / ${progress.third}",
+                    style = YoutubeTypography.titleSmall.copy(
+                        fontSize = font_12, fontWeight = FontWeight.W700
+                    )
                 )
-            )
-            Spacer(modifier = modifier.height(size_8))
-            if (video.downloadProgress.state != DownloadState.COMPLETED && video.downloadProgress.state != DownloadState.FAILED) {
-                DownloadProgress(
-                    downloaded = progress.first / 100, modifier = modifier
-                )
+                Spacer(modifier = modifier.height(size_8))
+                if (video.downloadProgress.state == DownloadState.COMPLETED) {
+                    // Hide the progress indicator if the download is complete
+                    Spacer(modifier = modifier.height(size_32)) // Or keep it as it is
+                } else {
+                    DownloadProgress(downloaded = progress.first / 100)
+                }
+            } else {
+                Spacer(modifier = modifier.height(size_32))
+                LinearProgressIndicator()
             }
-        } else {
-            Spacer(modifier = modifier.height(size_32))
-            LinearProgressIndicator()
         }
     }
 }
 
 @Composable
-fun ShowImage(modifier: Modifier, imageUrl: String, state: DownloadState) {
+fun ShowImage(
+    modifier: Modifier = Modifier, imageUrl: String, shouldVisible: Boolean
+) {
     Card(
         modifier = modifier.size(size_80), shape = RoundedCornerShape(size_8)
     ) {
-        Box(contentAlignment = Alignment.BottomStart) {
-            AsyncImage(
-                model = imageUrl, contentDescription = "image", contentScale = ContentScale.Crop
-            )
-            if (state == DownloadState.COMPLETED) {
-                Card(
-                    shape = CircleShape,
-                    modifier = Modifier
-                        .padding(size_5)
-                        .size(size_20),
-                    colors = CardColors(
-                        contentColor = Color.Black,
-                        containerColor = Color.White,
-                        disabledContentColor = Color.Gray,
-                        disabledContainerColor = Color.Gray.copy(alpha = 0.5f)
-                    ),
+        Box(contentAlignment = Alignment.BottomEnd) {
+            Box(contentAlignment = Alignment.Center) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = "image",
+                    placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
 
+                if (shouldVisible) {
+                    Card(
+                        shape = RoundedCornerShape(size_8),
+                        modifier = Modifier
+                            .size(size_24)
+                            .align(Alignment.Center),
+                        colors = CardColors(
+                            contentColor = Color.White,
+                            containerColor = Color.Black.copy(alpha = 0.4f),
+                            disabledContentColor = Color.Gray,
+                            disabledContainerColor = Color.Gray.copy(alpha = 0.5f)
+                        )
                     ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_play_arrow_icon),
-                        contentDescription = "Play Icon",
-                        tint = Color.Black,
-                        modifier = Modifier.size(size_18)
-                    )
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_play_arrow_icon),
+                                contentDescription = "Play Icon",
+                                tint = Color.White,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 }
 
+
 @Composable
-fun DownloadProgress(downloaded: Float, modifier: Modifier) {
+fun DownloadProgress(downloaded: Float) {
     LinearProgressIndicator(
         progress = { downloaded },
         strokeCap = StrokeCap.Square,
@@ -381,12 +377,8 @@ fun DownloadProgress(downloaded: Float, modifier: Modifier) {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Preview(showSystemUi = true)
+@Preview(showSystemUi = true, showBackground = true)
 @Composable
 private fun Preview() {
-    VideoItemView(
-        modifier = Modifier,
-        LocalVideo(title = "[4K] Barsaat Ki Dhun Full Video Song | Jubin Nautiyal, Gurmeet Choudhary & Karishma Sharma"),
-        Triple(0f, 0L, ""), {}
-    )
+    ShowImage(modifier = Modifier, imageUrl = "", shouldVisible = true)
 }
