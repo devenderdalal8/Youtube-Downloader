@@ -26,7 +26,7 @@ class MainViewModel @Inject constructor(
     @ApplicationContext val context: Context
 ) : ViewModel() {
 
-    private val _size = MutableStateFlow(Pair<String, Long>("", 0L))
+    private val _size = MutableStateFlow(Pair("", 0L))
     val size = _size.asStateFlow()
 
     private val _videoDetails = MutableStateFlow<UiState>(UiState.Loading)
@@ -38,14 +38,17 @@ class MainViewModel @Inject constructor(
                 when (val result = getVideoDetailsUseCase(url = url)) {
                     is Resource.Success -> {
                         val data = Gson().fromJson(result.data.toString(), Video::class.java)
-                        data.videoUrl?.getSize()
-
-                        _videoDetails.value = UiState.Success(
-                            data.copy(
-                                size = _size.value.first,
-                                length = _size.value.second
+                        if (data.error?.isNotEmpty() == true) {
+                            _videoDetails.value = UiState.Error(data.error.toString())
+                        } else {
+                            data.videoUrl?.getSize()
+                            _videoDetails.value = UiState.Success(
+                                data.copy(
+                                    size = _size.value.first,
+                                    length = _size.value.second
+                                )
                             )
-                        )
+                        }
                     }
 
                     is Resource.Error -> {
@@ -82,5 +85,6 @@ class MainViewModel @Inject constructor(
 sealed class UiState {
     data class Success(val data: Any) : UiState()
     data object Loading : UiState()
+    data object Nothing : UiState()
     data class Error(val message: String) : UiState()
 }

@@ -10,7 +10,7 @@ data class Video(
     @SerializedName("base_url") var baseUrl: String? = "",
     @SerializedName("video_id") var videoId: String? = "",
     @SerializedName("duration") var duration: String? = "",
-    @SerializedName("views") var views: String? = "",
+    @SerializedName("views") var views: String = "",
     @SerializedName("likes") var likes: String? = "",  // Nullable, as it can be null
     @SerializedName("resolution") var resolution: List<String> = arrayListOf(),
     @SerializedName("resolutionList") var resolutionList: Map<String, String> = mapOf(),
@@ -21,8 +21,9 @@ data class Video(
     @SerializedName("content_length") var length: Long? = 0L,
     @SerializedName("downloaded") var isDownloaded: Boolean = false,
     @SerializedName("downloaded_path") var downloadedPath: String? = "",
+    @SerializedName("error") var error: String? = "",
 ) {
     override fun toString(): String {
-        return "Video(title=$title, size = $size ,thumbnailUrl=$thumbnailUrl , videoUrl = $videoUrl ,duration=$duration, views=$views, likes=$likes, resolution=$resolution, resolutionList=$resolutionList, uploadDate=$uploadDate, channelUrl=$channelUrl, channelId=$channelId)"
+        return "Video(title=$title, size = $size ,thumbnailUrl=$thumbnailUrl , videoUrl = $videoUrl ,duration=$duration, views=$views, likes=$likes, resolution=$resolution, resolutionList=$resolutionList, uploadDate=$uploadDate, channelUrl=$channelUrl, channelId=$channelId , error =$error)"
     }
 }

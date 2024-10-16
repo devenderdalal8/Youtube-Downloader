@@ -22,24 +22,24 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.youtube.domain.model.Video
-import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.HomeScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.PlayListScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.SearchScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.SettingScreen
+import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.home.HomeScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.download.DownloadBottomSheet
-import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.MainViewModel
+import com.youtube.youtube_downloader.presenter.ui.screen.playVideo.PlayVideoScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.splashScreen.SplashScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.videoDownloaded.VideoDownloadScreen
 import com.youtube.youtube_downloader.util.BottomNavScreen
 import com.youtube.youtube_downloader.util.BottomSheet
 import com.youtube.youtube_downloader.util.Route
 import kotlinx.coroutines.launch
+import java.net.URLEncoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainNavigationScreen(
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel,
     navController: NavHostController
 ) {
 
@@ -72,47 +72,45 @@ fun MainNavigationScreen(
 
             composable(BottomNavScreen.Home.route) {
                 HomeScreen(
-                    videoUrl = "https://www.youtube.com/watch?v=ulZBNRlXW7A",
-                    viewModel = viewModel,
-                    isSearchable = true,
-                    onDownloadClicked = { videos ->
-                        downloadResolution.value = videos
-                        activeBottomSheet.value = BottomSheet.Download
-                        coroutineScope.launch { downloadBottomSheetState.show() }
-                    },
-                    onFullScreenChangeListener = {
-
-                    }
-                )
+                    isSearchable = true
+                ) { videoUrl ->
+                    navController.navigate(
+                        "videoPlayer/${
+                            URLEncoder.encode(videoUrl, "UTF-8")
+                        }"
+                    )
+                }
             }
+
             composable(BottomNavScreen.Setting.route) {
                 SettingScreen()
             }
+
             composable(BottomNavScreen.Download.route) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     VideoDownloadScreen()
                 }
             }
+
             composable(BottomNavScreen.PlayList.route) {
                 PlayListScreen()
             }
+
             composable(BottomNavScreen.Search.route) {
                 SearchScreen()
             }
-            composable(Route.Home.route) {
-                HomeScreen(
-                    videoUrl = "https://www.youtube.com/watch?v=ulZBNRlXW7A",
-                    viewModel = viewModel,
-                    isSearchable = true,
-                    onDownloadClicked = { videos ->
-                        downloadResolution.value = videos
-                        activeBottomSheet.value = BottomSheet.Download
-                        coroutineScope.launch { downloadBottomSheetState.show() }
-                    },
-                    onFullScreenChangeListener = {
 
-                    }
-                )
+            composable(
+                route = "videoPlayer/{videoUrl}",
+                arguments = listOf(navArgument("videoUrl") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val videoUrl = backStackEntry.arguments?.getString("videoUrl")
+                PlayVideoScreen(videoUrl = videoUrl.toString(),
+                    onFullScreenChangeListener = {},
+                    onDownloadClicked = {},
+                    onBackPressed = {
+                        navController.popBackStack()
+                    })
             }
             composable(
                 route = "watch/{itemId}",
@@ -124,15 +122,10 @@ fun MainNavigationScreen(
             ) { backStackEntry ->
                 val itemId = backStackEntry.arguments?.getString("itemId")
                 HomeScreen(
-                    videoUrl = "https://www.youtube.com/watch?v=${itemId}",
-                    viewModel = viewModel,
-                    isSearchable = true,
-                    onDownloadClicked = { videos ->
-                        downloadResolution.value = videos
-                        activeBottomSheet.value = BottomSheet.Download
-                        coroutineScope.launch { downloadBottomSheetState.show() }
-                    }, onFullScreenChangeListener = {}
-                )
+                    isSearchable = true
+                ) {
+
+                }
             }
         }
     }

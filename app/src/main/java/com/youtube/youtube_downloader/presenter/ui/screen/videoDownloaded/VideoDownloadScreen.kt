@@ -115,6 +115,7 @@ fun VideoDownloadScreen(
             }, onLike = {}, progress = progress, viewModel = viewModel
             )
         }
+        else -> {}
     }
 }
 

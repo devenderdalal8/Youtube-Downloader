@@ -1,4 +1,4 @@
-package com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen
+package com.youtube.youtube_downloader.presenter.ui.screen.playVideo
 
 import android.os.Build
 import android.widget.Toast
@@ -39,7 +39,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -48,6 +47,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.youtube.domain.model.Video
 import com.youtube.youtube_downloader.R
@@ -63,23 +63,21 @@ import com.youtube.youtube_downloader.util.convertIntoNumber
 import com.youtube.youtube_downloader.util.getTimeDifference
 
 @Composable
-fun HomeScreen(
+fun PlayVideoScreen(
     videoUrl: String = "",
-    viewModel: MainViewModel,
-    isSearchable: Boolean,
+    viewModel: MainViewModel = hiltViewModel(),
     onFullScreenChangeListener: (Boolean) -> Unit,
     onDownloadClicked: (Video) -> Unit,
+    onBackPressed:()-> Unit
 ) {
     LaunchedEffect(key1 = videoUrl) {
         viewModel.getVideoDetails(videoUrl)
     }
     val uiState = viewModel.videoDetails.collectAsState().value
     val fileSize = viewModel.size.collectAsState().value.first
-    val query = remember { mutableStateOf("") }
     val isFullScreen = remember {
         mutableStateOf(false)
     }
-
     val context = LocalContext.current
     when (uiState) {
         is UiState.Success -> {
@@ -99,15 +97,11 @@ fun HomeScreen(
                 MainHomeScreen(video = data,
                     modifier = Modifier.padding(paddingValue),
                     size = fileSize,
-                    isSearchable = isSearchable,
                     isFullScreen = isFullScreen.value,
-                    query = query.value,
-                    onValueListener = { search ->
-                        query.value = search
-                    }) { fullScreen ->
-                    onFullScreenChangeListener(fullScreen)
-                    isFullScreen.value = fullScreen
-                }
+                    onFullScreenChangeListener = { fullScreen ->
+                        onFullScreenChangeListener(fullScreen)
+                        isFullScreen.value = fullScreen
+                    })
             }
         }
 
@@ -120,6 +114,8 @@ fun HomeScreen(
                 CircularProgressIndicator()
             }
         }
+
+        is UiState.Nothing -> {}
     }
 }
 
@@ -130,40 +126,28 @@ fun MainHomeScreen(
     modifier: Modifier = Modifier,
     size: String,
     isFullScreen: Boolean,
-    onValueListener: (String) -> Unit,
-    query: String,
-    isSearchable: Boolean,
     onFullScreenChangeListener: (Boolean) -> Unit,
 ) {
+
     Box(
         modifier = modifier.fillMaxSize()
     ) {
         Column(modifier = modifier) {
-            if (isFullScreen) {
-                DefaultSearchBar(
-                    modifier = modifier,
-                    query = query,
-                    onValueListener = onValueListener,
-                    isSearchable = isSearchable
-                )
-            }
             PlayerScreen(video = video, isDownloaded = false) { fullScreen ->
                 onFullScreenChangeListener(fullScreen)
             }
-            if (isFullScreen) {
+            if (!isFullScreen) {
                 Spacer(modifier = modifier.padding(size_8))
                 Column(modifier = modifier.verticalScroll(rememberScrollState())) {
                     Title(
-                        title = video.title.toString(),
-                        thumbnailUrl = video.thumbnailUrl.toString()
+                        title = video.title.toString(), thumbnailUrl = video.thumbnailUrl.toString()
                     )
                     Spacer(modifier = modifier.padding(size_8))
                     HorizontalDivider(thickness = 1.dp)
                     Spacer(modifier = modifier.padding(size_8))
                     ShowVideoDetails(video = video, size = size)
                     HorizontalDivider(
-                        thickness = 1.dp,
-                        modifier = modifier.padding(vertical = size_8)
+                        thickness = 1.dp, modifier = modifier.padding(vertical = size_8)
                     )
                     VideoDescription(description = video.description, modifier = modifier)
                 }
@@ -171,6 +155,7 @@ fun MainHomeScreen(
         }
     }
 }
+
 
 @Composable
 fun VideoDescription(description: String?, modifier: Modifier) {
@@ -211,12 +196,9 @@ fun VideoDescription(description: String?, modifier: Modifier) {
 
 @Composable
 fun DefaultSearchBar(
-    modifier: Modifier,
-    query: String,
-    onValueListener: (String) -> Unit,
-    isSearchable: Boolean
+    modifier: Modifier, query: String, onValueListener: (String) -> Unit, isSearchable: Boolean
 ) {
-    if(isSearchable){
+    if (isSearchable) {
         TextField(
             value = query,
             onValueChange = { onValueListener(it) },
@@ -266,8 +248,8 @@ fun ShowVideoDetails(video: Video, size: String) {
         if (video.likes != null) {
             VideoDetails(video.likes.toString(), "Likes")
         }
-        if (video.views != null) {
-            VideoDetails(video.views.convertIntoNumber(), "Views")
+        if (video.views.isNotEmpty()) {
+            VideoDetails(video.views.toLong().convertIntoNumber(), "Views")
         }
         if (size.isNotEmpty()) {
             VideoDetails(size, "Size")

@@ -116,10 +116,6 @@ fun OnlineVideoPlayer(
     }
 }
 
-fun fullScreen(context: Context) {
-
-}
-
 @Composable
 fun ProgressBarWithImage(video: Video, visibility: Boolean, isReleased: Boolean) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

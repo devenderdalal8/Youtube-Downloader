@@ -51,8 +51,7 @@ class MainActivity: ComponentActivity() {
             YoutubeDownloaderTheme {
                 MainNavigationScreen(
                     modifier = Modifier,
-                    navController = navController,
-                    viewModel = viewModel
+                    navController = navController
                 )
             }
         }

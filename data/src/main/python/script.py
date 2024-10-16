@@ -3,7 +3,7 @@ import os
 import re
 import requests
 from pytubefix import YouTube, Playlist, Channel
-
+from pytubefix import Search
 
 # YouTubeDownloader for video
 class YouTubeDownloader:
@@ -151,6 +151,50 @@ class Video:
     def to_json(self):
         return json.dumps(self.__dict__)
 
+class SearchVideo:
+    def __init__(self, title="", thumbnail_url="", base_url="", video_id="", video_url="",
+                 duration="", views="", upload_date=None):
+        self.title = title
+        self.thumbnail_url = thumbnail_url
+        self.base_url = base_url
+        self.video_id = video_id
+        self.video_url = video_url
+        self.duration = duration
+        self.views = views
+        self.upload_date = upload_date
+
+    def to_json(self):
+        return json.dumps(self.__dict__, indent=4)
+
+class YouTubeVideoFetcher:
+    def __init__(self, query):
+        self.query = query
+
+    def search_videos(self, max_results=10):
+        try:
+            search = Search(self.query)
+            results = search.videos
+            videos = []
+            for result in results[:max_results]:
+                video = SearchVideo(
+                    title=result.title,
+                    thumbnail_url=result.thumbnail_url,
+                    video_id=result.video_id,
+                    video_url=result.watch_url,
+                    duration=result.length,
+                    views=result.views,
+                    upload_date=str(result.publish_date.isoformat()) if result.publish_date else None  # Handle publish date
+                )
+                videos.append(video.__dict__)
+
+            return json.dumps({
+                "videos": videos,
+                "total": len(results)
+            }, indent=4)
+
+        except Exception as e:
+            return json.dumps({'error': str(e)}, indent=4)
+
 
 # Callable functions
 def download_video(url):
@@ -171,7 +215,6 @@ def download_audio(url, mp3=True):
     downloader = YouTubeDownloader(url)
     return downloader.download_audio(mp3=mp3)
 
-
 def download_subtitles(url, language_code='en', filename='captions.txt'):
     downloader = YouTubeDownloader(url)
     return downloader.download_subtitles(language_code, filename)
@@ -181,6 +224,9 @@ def download_playlist(url, mp3=True):
     downloader = PlaylistDownloader(url)
     return downloader.download_all_videos_audio(mp3=mp3)
 
+def search_video(query):
+    url_details = YouTubeVideoFetcher(query)
+    return url_details.search_videos(max_results=3)
 
 def download_channel(url):
     downloader = ChannelDownloader(url)
