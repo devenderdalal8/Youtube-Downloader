@@ -12,9 +12,14 @@ import com.youtube.domain.utils.Constant.DOWNLOAD_COMPLETE
 import com.youtube.domain.utils.Constant.DOWNLOAD_FAILED
 import com.youtube.domain.utils.Constant.DOWNLOAD_START
 import com.youtube.domain.utils.Constant.DOWNLOAD_TEXT
+import com.youtube.domain.utils.Constant.FAILED_TO_DOWNLOAD_VIDEO
 import com.youtube.domain.utils.Constant.FILE_SIZE
 import com.youtube.domain.utils.Constant.LAST_PROGRESS
+import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.domain.utils.Constant.PROGRESS_DATA
+import com.youtube.domain.utils.Constant.START_BYTE
+import com.youtube.domain.utils.Constant.TITLE
+import com.youtube.domain.utils.Constant.VIDEO_URL
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +44,7 @@ class VideoDownloadService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val title = intent?.getStringExtra("fileName")
+        val title = intent?.getStringExtra(TITLE)
         val notification = VideoNotificationManager.showNotification(
             context = this,
             title = title.toString(),
@@ -52,9 +57,9 @@ class VideoDownloadService : Service() {
     }
 
     private fun startDownload(intent: Intent, title: String?) {
-        val url = intent.getStringExtra("url") ?: return
-        val baseUrl = intent.getStringExtra("baseUrl") ?: return
-        val downloadBytes = intent.getLongExtra("downloadedBytes", 0)
+        val url = intent.getStringExtra(VIDEO_URL) ?: return
+        val baseUrl = intent.getStringExtra(BASE_URL) ?: return
+        val downloadBytes = intent.getLongExtra(START_BYTE, 0)
         scope.launch {
             try {
                 downloadVideo(
@@ -103,7 +108,7 @@ class VideoDownloadService : Service() {
                         val response = okHttpClient.newCall(request).execute()
                         if (!response.isSuccessful) {
                             response.close()
-                            throw Exception("Failed to download video")
+                            throw Exception(FAILED_TO_DOWNLOAD_VIDEO)
                         }
 
                         response.body()?.let { body ->
@@ -180,7 +185,7 @@ class VideoDownloadService : Service() {
             val notification = VideoNotificationManager.showProgressNotification(
                 context = this@VideoDownloadService,
                 title = title,
-                message = "",
+                message = NOTHING,
                 notificationId = notificationId,
                 progress = progress
             )

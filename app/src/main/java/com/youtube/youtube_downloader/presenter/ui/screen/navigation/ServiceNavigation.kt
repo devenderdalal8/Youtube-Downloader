@@ -4,6 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.youtube.data.service.VideoDownloadService
+import com.youtube.domain.utils.Constant.BASE_URL
+import com.youtube.domain.utils.Constant.START_BYTE
+import com.youtube.domain.utils.Constant.TITLE
+import com.youtube.domain.utils.Constant.VIDEO_URL
 
 fun Context.startDownloadService(
     url: String,
@@ -13,10 +17,10 @@ fun Context.startDownloadService(
 ) {
     pauseDownloadService()
     val intent = Intent(this, VideoDownloadService::class.java).apply {
-        putExtra("url", url)
-        putExtra("baseUrl", baseUrl)
-        putExtra("fileName", fileName)
-        putExtra("downloadedBytes", downloadedBytes)
+        putExtra(VIDEO_URL, url)
+        putExtra(BASE_URL, baseUrl)
+        putExtra(TITLE, fileName)
+        putExtra(START_BYTE, downloadedBytes)
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         this.startForegroundService(intent)
