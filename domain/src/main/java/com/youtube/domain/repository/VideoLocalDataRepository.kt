@@ -10,9 +10,9 @@ interface VideoLocalDataRepository {
 
     suspend fun delete(video: LocalVideo)
 
-    suspend fun getAllVideo(): Flow<List<LocalVideo>>
+    suspend fun getVideos(): Flow<List<LocalVideo>>
 
-    suspend fun isVideoAvailable(id: String): Boolean
+    suspend fun isVideoAvailable(baseUrl: String): Boolean
 
-    suspend fun videoById(id: String): LocalVideo
+    suspend fun videoByBaseUrl(baseUrl: String): LocalVideo
 }

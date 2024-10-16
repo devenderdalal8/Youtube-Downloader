@@ -5,7 +5,6 @@ import androidx.annotation.RequiresApi
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun String.convertDateToYearsAndDays(): String {
     val offsetDateTime = OffsetDateTime.parse(this)
 

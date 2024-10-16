@@ -1,5 +1,6 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.navigation
 
+import android.os.Build
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -13,7 +14,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -29,6 +29,7 @@ import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.Settin
 import com.youtube.youtube_downloader.presenter.ui.screen.download.DownloadBottomSheet
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.MainViewModel
 import com.youtube.youtube_downloader.presenter.ui.screen.splashScreen.SplashScreen
+import com.youtube.youtube_downloader.presenter.ui.screen.videoDownloaded.VideoDownloadScreen
 import com.youtube.youtube_downloader.util.BottomNavScreen
 import com.youtube.youtube_downloader.util.BottomSheet
 import com.youtube.youtube_downloader.util.Route
@@ -56,7 +57,7 @@ fun MainNavigationScreen(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Route.Splash.route,  // Splash screen as the start
+            startDestination = Route.Splash.route,
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -88,7 +89,9 @@ fun MainNavigationScreen(
                 SettingScreen()
             }
             composable(BottomNavScreen.Download.route) {
-                PlayListScreen()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    VideoDownloadScreen()
+                }
             }
             composable(BottomNavScreen.PlayList.route) {
                 PlayListScreen()
@@ -143,15 +146,19 @@ fun MainNavigationScreen(
             when (activeBottomSheet.value) {
                 BottomSheet.Download -> {
                     downloadResolution.value?.let {
-                        DownloadBottomSheet(
-                            modifier = modifier,
-                            video = it,
-                            onDismiss = {
-                                coroutineScope.launch {
-                                    downloadBottomSheetState.hide()
-                                    activeBottomSheet.value = null
-                                }
-                            })
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            DownloadBottomSheet(
+                                modifier = modifier,
+                                video = it,
+                                onDismiss = {
+                                    coroutineScope.launch {
+                                        downloadBottomSheetState.hide()
+                                        activeBottomSheet.value = null
+                                    }
+                                }) {
+                                navController.navigate(BottomNavScreen.Download.route)
+                            }
+                        }
                     }
                 }
                 else -> {}

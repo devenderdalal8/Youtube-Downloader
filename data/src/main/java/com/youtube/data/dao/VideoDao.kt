@@ -7,8 +7,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.youtube.domain.model.entity.LocalVideo
-import com.youtube.domain.utils.Constant.TABLE_NAME
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface VideoDao {
@@ -22,11 +20,11 @@ interface VideoDao {
     suspend fun delete(video: LocalVideo)
 
     @Query("SELECT * FROM video_table ")
-    suspend fun getAllVideo(): List<LocalVideo>
+    suspend fun getVideos(): List<LocalVideo>
 
-    @Query("SELECT COUNT(*) FROM video_table WHERE id = :videoId")
-    suspend fun isVideoAvailable(videoId: String): Int
+    @Query("SELECT COUNT(*) FROM video_table WHERE baseUrl = :baseUrl")
+    suspend fun isVideoAvailable(baseUrl: String): Int
 
-    @Query("SELECT * FROM video_table WHERE id = :videoId")
-    suspend fun videoById(videoId: String): LocalVideo
+    @Query("SELECT * FROM video_table WHERE baseUrl = :baseUrl LIMIT 1")
+    suspend fun videoById(baseUrl: String): LocalVideo
 }

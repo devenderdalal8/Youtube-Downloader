@@ -1,5 +1,6 @@
 package com.youtube.data.repositoryImpl
 
+import android.util.Log
 import com.chaquo.python.PyObject
 import com.youtube.domain.repository.PythonScriptRepository
 import com.youtube.domain.utils.Resource
@@ -18,6 +19,7 @@ class PythonScriptRepositoryImpl @Inject constructor(
                 val result = callPythonFunction(functionName, *args)
                 Resource.Success(result)
             } catch (ex: Exception) {
+                Log.e("TAG", "downloadAsync: ${ex.message}", )
                 Resource.Error(ex.message.toString())
             }
         }
@@ -31,6 +33,7 @@ class PythonScriptRepositoryImpl @Inject constructor(
             }
             return service
         } catch (e: Exception) {
+            Log.e("TAG", "callPythonFunction: ${e.message.toString()} ")
             "Error: ${e.message}"
         }
     }

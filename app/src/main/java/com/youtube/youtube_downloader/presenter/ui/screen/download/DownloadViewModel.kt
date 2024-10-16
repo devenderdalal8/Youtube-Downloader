@@ -1,14 +1,18 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.download
 
-import android.util.Log
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.youtube.domain.model.DownloadProgress
+import com.youtube.domain.model.DownloadState
 import com.youtube.domain.model.Video
 import com.youtube.domain.model.entity.LocalVideo
-import com.youtube.domain.repository.DownloadWorkerRepository
 import com.youtube.domain.repository.VideoLocalDataRepository
 import com.youtube.domain.usecase.GetVideoResolutionUseCase
 import com.youtube.domain.utils.Resource
+import com.youtube.youtube_downloader.presenter.ui.screen.navigation.pauseDownloadService
+import com.youtube.youtube_downloader.presenter.ui.screen.navigation.startDownloadService
 import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -26,12 +30,8 @@ import javax.inject.Inject
 @HiltViewModel
 class DownloadViewModel @Inject constructor(
     private val getVideoResolutionUseCase: GetVideoResolutionUseCase,
-    private val workerRepository: DownloadWorkerRepository,
     private val localDataRepository: VideoLocalDataRepository
 ) : ViewModel() {
-
-    private val _requestID = MutableStateFlow<UUID?>(null)
-    val requestId = _requestID.asStateFlow()
 
     private val _downloadVideoUiState =
         MutableStateFlow<DownloadVideoUiState>(DownloadVideoUiState.Loading)
@@ -60,37 +60,63 @@ class DownloadViewModel @Inject constructor(
         }
     }
 
-    fun storeVideoLocally(video: Video) {
+    fun isVideoAvailable(baseUrl: String): Boolean {
+        var result = false
+        viewModelScope.launch(Dispatchers.IO) {
+            result = localDataRepository.isVideoAvailable(baseUrl = baseUrl)
+        }
+        return result
+    }
+
+    fun storeVideoLocally(video: Video, id: UUID) {
         viewModelScope.launch(Dispatchers.IO) {
             val localVideo = LocalVideo(
                 title = video.title,
                 thumbnailUrl = video.thumbnailUrl,
-                baseUrl = video.baseUrl,
+                baseUrl = video.baseUrl.toString(),
                 downloadedPath = video.downloadedPath,
                 videoUrl = video.videoUrl,
                 duration = video.duration,
-                isDownloaded = false,
-                size = video.size
+                size = video.size,
+                description = video.description,
+                videoId = video.videoId,
+                workerId = id,
+                downloadProgress = DownloadProgress(
+                    totalMegaBytes = video.length.toString(),
+                    totalBytes = video.length ?: 0L,
+                    progress = 0,
+                    state = DownloadState.DOWNLOADING,
+                    uri = Uri.parse(video.videoUrl).toString()
+                )
             )
             localDataRepository.insert(localVideo)
         }
     }
 
-    fun startDownload(url: String, downloadedBytes: Long = 0L, fileName: String? = "") {
+    fun startDownload(
+        context: Context,
+        url: String,
+        downloadedBytes: Long = 0L,
+        fileName: String? = "",
+        baseUrl: String,
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
-            workerRepository.startDownload(
-                fileName = fileName, url = url, downloadedBytes = downloadedBytes
+            context.pauseVideoService()
+            context.startDownloadService(
+                url = url,
+                downloadedBytes = downloadedBytes,
+                baseUrl = baseUrl,
+                fileName = fileName.toString()
             )
-            _requestID.value = workerRepository.getRequestId()
-            Log.d("TAG", "startDownload: ${_requestID.value}")
         }
     }
 
-    fun pauseDownload() {
+    private fun Context.pauseVideoService() {
         viewModelScope.launch(Dispatchers.IO) {
-            workerRepository.pauseDownload()
+            pauseDownloadService()
         }
     }
+
 
     private suspend fun getSize(videoUrl: String): String {
         return withContext(Dispatchers.IO) {

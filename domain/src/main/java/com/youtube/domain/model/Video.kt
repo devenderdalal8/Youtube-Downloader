@@ -18,6 +18,7 @@ data class Video(
     @SerializedName("channel_url") var channelUrl: String? = "",
     @SerializedName("channel_id") var channelId: String? = "",
     @SerializedName("size") var size: String? = "",
+    @SerializedName("content_length") var length: Long? = 0L,
     @SerializedName("downloaded") var isDownloaded: Boolean = false,
     @SerializedName("downloaded_path") var downloadedPath: String? = "",
 ) {

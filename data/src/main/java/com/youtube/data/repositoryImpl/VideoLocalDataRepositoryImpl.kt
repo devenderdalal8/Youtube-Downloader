@@ -1,5 +1,6 @@
 package com.youtube.data.repositoryImpl
 
+import android.util.Log
 import com.youtube.data.dao.VideoDao
 import com.youtube.domain.model.entity.LocalVideo
 import com.youtube.domain.repository.VideoLocalDataRepository
@@ -21,6 +22,7 @@ class VideoLocalDataRepositoryImpl @Inject constructor(
     override suspend fun update(video: LocalVideo) {
         withContext(Dispatchers.IO) {
             videoDao.update(video)
+            Log.d("TAG", "update: ${video.downloadProgress}")
         }
     }
 
@@ -30,22 +32,22 @@ class VideoLocalDataRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getAllVideo(): Flow<List<LocalVideo>> {
+    override suspend fun getVideos(): Flow<List<LocalVideo>> {
         return withContext(Dispatchers.IO) {
-            flowOf(videoDao.getAllVideo())
+            flowOf(videoDao.getVideos())
         }
     }
 
-    override suspend fun isVideoAvailable(id: String): Boolean {
+    override suspend fun isVideoAvailable(baseUrl: String): Boolean {
         return withContext(Dispatchers.IO) {
-            val count = videoDao.isVideoAvailable(id)
+            val count = videoDao.isVideoAvailable(baseUrl)
             (count > 0)
         }
     }
 
-    override suspend fun videoById(id: String): LocalVideo {
+    override suspend fun videoByBaseUrl(baseUrl: String): LocalVideo {
         return withContext(Dispatchers.IO) {
-            videoDao.videoById(id)
+            videoDao.videoById(baseUrl)
         }
     }
 }

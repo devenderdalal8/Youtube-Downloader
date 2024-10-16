@@ -26,12 +26,11 @@ class MainViewModel @Inject constructor(
     @ApplicationContext val context: Context
 ) : ViewModel() {
 
-    private val _size = MutableStateFlow("")
+    private val _size = MutableStateFlow(Pair<String, Long>("", 0L))
     val size = _size.asStateFlow()
 
     private val _videoDetails = MutableStateFlow<UiState>(UiState.Loading)
     val videoDetails = _videoDetails.asStateFlow()
-
 
     fun getVideoDetails(url: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -40,8 +39,13 @@ class MainViewModel @Inject constructor(
                     is Resource.Success -> {
                         val data = Gson().fromJson(result.data.toString(), Video::class.java)
                         data.videoUrl?.getSize()
-                        Log.d("TAG", "getVideoDetails: ${data.videoUrl}")
-                        _videoDetails.value = UiState.Success(data.copy(size = _size.value))
+
+                        _videoDetails.value = UiState.Success(
+                            data.copy(
+                                size = _size.value.first,
+                                length = _size.value.second
+                            )
+                        )
                     }
 
                     is Resource.Error -> {
@@ -65,7 +69,7 @@ class MainViewModel @Inject constructor(
                 val url = URL(this@getSize)
                 conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "HEAD"
-                _size.value = conn.contentLengthLong.getFileSize()
+                _size.value = Pair(conn.contentLengthLong.getFileSize(), conn.contentLengthLong)
             } catch (e: IOException) {
                 Log.e("TAG", "getFileSizeFromUrl: ${e.message}")
             } finally {

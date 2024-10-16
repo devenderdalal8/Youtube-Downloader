@@ -2,6 +2,8 @@ package com.youtube.youtube_downloader.presenter.ui.screen.download
 
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -62,18 +64,20 @@ import com.youtube.youtube_downloader.presenter.ui.theme.size_64
 import com.youtube.youtube_downloader.presenter.ui.theme.size_8
 import com.youtube.youtube_downloader.presenter.ui.theme.size_96
 import com.youtube.youtube_downloader.util.Constant
+import java.util.UUID
 
 @Composable
 fun DownloadBottomSheet(
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit,
     video: Video,
-    viewModel: DownloadViewModel = hiltViewModel()
+    viewModel: DownloadViewModel = hiltViewModel(),
+    onButtonClickListener: () -> Unit
 ) {
+    val context = LocalContext.current
     LaunchedEffect(key1 = video.videoId) {
         viewModel.getVideoDetails(video.resolution, video.baseUrl)
     }
-
     when (val uiState = viewModel.downloadVideoUiState.collectAsState().value) {
         is DownloadVideoUiState.Loading -> {
             Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -88,12 +92,20 @@ fun DownloadBottomSheet(
                 data = data,
                 video = video
             ) { url ->
-//                viewModel.pauseDownload()
-//                viewModel.startDownload(
-//                    fileName = video.title,
-//                    url = url,
-//                )
-//                viewModel.storeVideoLocally(video.copy( ))
+                if (!viewModel.isVideoAvailable(video.baseUrl.toString())) {
+                    val id = UUID.randomUUID()
+                    viewModel.startDownload(
+                        context = context,
+                        baseUrl = video.baseUrl.toString(),
+                        fileName = video.title,
+                        url = url,
+                    )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        viewModel.storeVideoLocally(video, id = id)
+                    }
+                }
+                onButtonClickListener()
+                onDismiss()
             }
         }
     }
@@ -295,11 +307,12 @@ fun ShowProfile(context: Context, modifier: Modifier, video: Video) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 private fun DownloadPreview() {
     Box(modifier = Modifier) {
-        DownloadBottomSheet(onDismiss = {}, video = Video())
+        DownloadBottomSheet(onDismiss = {}, video = Video()) {}
     }
 }

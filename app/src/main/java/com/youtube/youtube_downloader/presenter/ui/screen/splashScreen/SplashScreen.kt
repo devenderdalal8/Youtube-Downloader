@@ -1,6 +1,7 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.splashScreen
 
 import android.view.animation.OvershootInterpolator
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +25,7 @@ fun SplashScreen(
     modifier: Modifier = Modifier,
     onClickListener: () -> Unit
 ) {
-    val scale = remember { androidx.compose.animation.core.Animatable(0f) }
+    val scale = remember { Animatable(0f) }
 
     LaunchedEffect(key1 = true) {
         scale.animateTo(
