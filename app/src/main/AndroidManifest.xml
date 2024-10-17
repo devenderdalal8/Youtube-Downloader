@@ -29,6 +29,8 @@
         <activity
             android:name=".presenter.ui.screen.mainActivity.MainActivity"
             android:exported="true"
+            android:configChanges="orientation|screenSize"
+            android:screenOrientation="unspecified"
             android:theme="@style/Theme.YoutubeDownloader">
 
             <intent-filter>
@@ -36,9 +38,5 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            tools:node="remove" />
     </application>
 </manifest>

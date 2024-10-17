@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -42,7 +43,7 @@ fun MainNavigationScreen(
     modifier: Modifier = Modifier,
     navController: NavHostController
 ) {
-
+    val context = LocalContext.current
     val downloadBottomSheetState = rememberModalBottomSheetState()
     val activeBottomSheet = remember { mutableStateOf<BottomSheet?>(null) }
     val coroutineScope = rememberCoroutineScope()
@@ -105,12 +106,12 @@ fun MainNavigationScreen(
                 arguments = listOf(navArgument("videoUrl") { type = NavType.StringType }),
             ) { backStackEntry ->
                 val videoUrl = backStackEntry.arguments?.getString("videoUrl")
-                PlayVideoScreen(videoUrl = videoUrl.toString(),
-                    onFullScreenChangeListener = {},
-                    onDownloadClicked = {},
-                    onBackPressed = {
-                        navController.popBackStack()
-                    })
+                PlayVideoScreen(
+                    navController = navController,
+                    videoUrl = videoUrl.toString(),
+                ) {
+
+                }
             }
             composable(
                 route = "watch/{itemId}",

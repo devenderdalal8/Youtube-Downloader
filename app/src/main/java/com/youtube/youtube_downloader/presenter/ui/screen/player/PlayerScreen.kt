@@ -15,15 +15,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -44,16 +51,38 @@ fun PlayerScreen(
     onFullScreenChangeListener: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
     val progressBarVisibility = viewModel.progressBar.collectAsState().value
+    var currentPlaybackPosition by rememberSaveable { mutableStateOf(0L) }
+    var isPlaying by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(key1 = video.videoId) {
         viewModel.setMediaItem(videoUrl = video.videoUrl, title = video.title)
+        viewModel.exoPlayer.seekTo(currentPlaybackPosition)
+        if (isPlaying) {
+            viewModel.exoPlayer.play()
+        }
     }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.exoPlayer.apply {
+                currentPlaybackPosition = currentPosition
+                isPlaying = this.isPlaying
+                release()
+            }
+        }
+    }
+
 
     if (isDownloaded) {
         OnlineVideoPlayer(
             video = video,
             modifier = modifier,
+            screenWidth = screenWidth,
+            screenHeight = screenHeight,
             viewModel = viewModel,
             context = context,
             progressBarVisibility = progressBarVisibility
@@ -66,10 +95,13 @@ fun PlayerScreen(
             modifier = modifier,
             viewModel = viewModel,
             context = context,
-            progressBarVisibility = progressBarVisibility
-        ) { isFullScreen ->
-            onFullScreenChangeListener(isFullScreen)
-        }
+            progressBarVisibility = progressBarVisibility,
+            onFullScreenChangeListener = { isFullScreen ->
+                onFullScreenChangeListener(isFullScreen)
+            },
+            screenWidth = screenWidth,
+            screenHeight = screenHeight
+        )
     }
 }
 
@@ -81,12 +113,14 @@ fun OnlineVideoPlayer(
     viewModel: PlayerViewModel,
     context: Context,
     progressBarVisibility: Boolean,
+    screenWidth: Dp,
+    screenHeight: Dp,
     onFullScreenChangeListener: (Boolean) -> Unit
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(300.dp)
+            .height(if (screenHeight > screenWidth) screenWidth else screenHeight)
             .background(Color.Black)
     ) {
 
