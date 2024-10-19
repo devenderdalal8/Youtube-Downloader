@@ -2,8 +2,10 @@ package com.youtube.youtube_downloader.util
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import java.net.URL
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.Calendar
@@ -74,7 +76,22 @@ fun Long.convertIntoNumber(): String {
 }
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun String.getTimeDifference() :String{
     return this.substring(0 , 10).split("-").reversed().joinToString("/")
+}
+
+fun String.isUrlExpired(): Boolean {
+    val url = URL(this)
+    val queryParams = url.query.split("&")
+    val expireParam = queryParams.find { it.startsWith("expire=") }
+
+    expireParam?.let {
+        val expireTime = it.substringAfter("expire=").toLong() * 1000L // Convert to milliseconds
+        val expireDate = Date(expireTime)
+        val currentDate = Calendar.getInstance().time
+
+        return currentDate.after(expireDate)
+    }
+
+    return true // If no expire param is found, consider the URL expired
 }

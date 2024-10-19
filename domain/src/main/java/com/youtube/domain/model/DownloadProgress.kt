@@ -9,7 +9,6 @@ data class DownloadProgress(
     var totalMegaBytes: String = "0",
     var bytesDownloaded: Long = 0L,
     var totalBytes: Long = 0L,
-    var state: DownloadState = DownloadState.PENDING,
     var uri: String = Uri.EMPTY.toString()
 ) {
     companion object {
@@ -21,17 +20,20 @@ data class DownloadProgress(
                 totalMegaBytes = "0",
                 bytesDownloaded = 0L,
                 totalBytes = 0L,
-                state = DownloadState.PENDING,
                 uri = Uri.EMPTY.toString()
             )
     }
 
     override fun toString(): String {
-        return "DownloadProgress(megaBytesDownloaded='$megaBytesDownloaded', percentage=$progress, percentageDisplay='$percentageDisplay', totalMegaBytes='$totalMegaBytes', bytesDownloaded=$bytesDownloaded, totalBytes=$totalBytes, state=$state, uri='$uri')"
+        return "DownloadProgress(megaBytesDownloaded='$megaBytesDownloaded', percentage=$progress, percentageDisplay='$percentageDisplay', totalMegaBytes='$totalMegaBytes', bytesDownloaded=$bytesDownloaded, totalBytes=$totalBytes, uri='$uri')"
     }
 
 }
 
 enum class DownloadState {
     PENDING, PAUSED, COMPLETED, DOWNLOADING, FAILED
+}
+
+enum class VideoType {
+    AUDIO, VIDEO
 }

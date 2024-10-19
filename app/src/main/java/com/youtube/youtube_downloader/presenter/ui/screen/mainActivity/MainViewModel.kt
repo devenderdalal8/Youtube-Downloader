@@ -38,6 +38,7 @@ class MainViewModel @Inject constructor(
                 when (val result = getVideoDetailsUseCase(url = url)) {
                     is Resource.Success -> {
                         val data = Gson().fromJson(result.data.toString(), Video::class.java)
+                        Log.d("TAG", "getVideoDetails: $data")
                         if (data.error?.isNotEmpty() == true) {
                             _videoDetails.value = UiState.Error(data.error.toString())
                         } else {

@@ -219,14 +219,13 @@ def download_subtitles(url, language_code='en', filename='captions.txt'):
     downloader = YouTubeDownloader(url)
     return downloader.download_subtitles(language_code, filename)
 
-
 def download_playlist(url, mp3=True):
     downloader = PlaylistDownloader(url)
     return downloader.download_all_videos_audio(mp3=mp3)
 
 def search_video(query):
     url_details = YouTubeVideoFetcher(query)
-    return url_details.search_videos(max_results=3)
+    return url_details.search_videos(max_results=5)
 
 def download_channel(url):
     downloader = ChannelDownloader(url)

@@ -1,6 +1,5 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.home
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -27,13 +27,14 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.ImeAction
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -41,9 +42,9 @@ import com.youtube.domain.model.SearchVideo
 import com.youtube.domain.model.VideoResponse
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.UiState
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeTypography
-import com.youtube.youtube_downloader.presenter.ui.theme.dark_onPrimaryContainer
 import com.youtube.youtube_downloader.presenter.ui.theme.font_12
 import com.youtube.youtube_downloader.presenter.ui.theme.font_16
+import com.youtube.youtube_downloader.presenter.ui.theme.gray_75
 import com.youtube.youtube_downloader.presenter.ui.theme.size_0
 import com.youtube.youtube_downloader.presenter.ui.theme.size_16
 import com.youtube.youtube_downloader.presenter.ui.theme.size_4
@@ -59,14 +60,13 @@ fun HomeScreen(
 ) {
 
     val uiState = viewModel.uiState.collectAsState().value
-    val query = remember { mutableStateOf("") }
+    val query = rememberSaveable { mutableStateOf("") }
 
     val context = LocalContext.current
     val isLoading = viewModel.loading.collectAsState().value
     when (uiState) {
         is UiState.Success -> {
             val data = uiState.data as VideoResponse
-            Log.e("TAG", "HomeScreen: $data")
             MainHomeScreen(modifier = Modifier,
                 data = data.videos ?: emptyList(),
                 isSearchable = isSearchable,
@@ -121,10 +121,10 @@ fun MainHomeScreen(
                 shape = RoundedCornerShape(
                     topEnd = size_0, topStart = size_0, bottomEnd = size_16, bottomStart = size_16
                 ), colors = CardColors(
-                    contentColor = dark_onPrimaryContainer.copy(alpha = 0.5f),
-                    containerColor = dark_onPrimaryContainer.copy(alpha = 0.5f),
-                    disabledContentColor = dark_onPrimaryContainer.copy(alpha = 0.5f),
-                    disabledContainerColor = dark_onPrimaryContainer.copy(alpha = 0.5f)
+                    contentColor = gray_75,
+                    containerColor = gray_75,
+                    disabledContentColor = gray_75,
+                    disabledContainerColor = gray_75
                 )
             ) {
                 DefaultSearchBar(
@@ -136,7 +136,7 @@ fun MainHomeScreen(
             }
             ShowVideo(data = data,
                 modifier = modifier,
-                onClickListener = { video, index ->
+                onClickListener = { video, _ ->
                     onClickListener(video.videoUrl)
                 }
             )
@@ -246,11 +246,13 @@ fun DefaultSearchBar(
                 )
             },
             shape = RoundedCornerShape(size_8),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             colors = TextFieldDefaults.colors(
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent,
-            )
+            ),
+            singleLine = true
         )
     }
 }

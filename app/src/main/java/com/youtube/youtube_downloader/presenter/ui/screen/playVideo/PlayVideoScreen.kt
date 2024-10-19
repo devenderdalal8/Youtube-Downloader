@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -42,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,6 +54,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.youtube.domain.model.Video
+import com.youtube.youtube_downloader.R
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.MainViewModel
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.UiState
 import com.youtube.youtube_downloader.presenter.ui.screen.player.PlayerScreen
@@ -79,9 +82,7 @@ fun PlayVideoScreen(
 
     var previousFullScreenState by rememberSaveable { mutableStateOf(isFullScreen) }
 
-    // Handle full-screen toggle
     LaunchedEffect(isFullScreen) {
-        // Only proceed if the full-screen state actually changed
         if (isFullScreen != previousFullScreenState) {
             Log.e("PlayVideoScreen", isFullScreen.toString())
             previousFullScreenState = isFullScreen
@@ -93,12 +94,10 @@ fun PlayVideoScreen(
                 window?.let { WindowInsetsControllerCompat(it, decorView!!) }
 
             if (isFullScreen) {
-                // Enable full-screen mode (hide status & navigation bars)
                 window?.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
                 windowInsetsController?.hide(WindowInsetsCompat.Type.systemBars())
                 activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             } else {
-                // Exit full-screen mode (show status & navigation bars)
                 window?.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
                 windowInsetsController?.show(WindowInsetsCompat.Type.systemBars())
                 activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -111,14 +110,14 @@ fun PlayVideoScreen(
             val data = uiState.data as Video
             Scaffold(floatingActionButton = {
                 if (!isFullScreen) {
-//                    FloatingActionButton(
-//                        onClick = { onDownloadClicked(data) },
-//                    ) {
-//                        Icon(
-//                            painter = painterResource(id = R.drawable.ic_file_download_icon),
-//                            contentDescription = "",
-//                        )
-//                    }
+                    FloatingActionButton(
+                        onClick = { onDownloadClicked(data) },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_file_download_icon),
+                            contentDescription = "",
+                        )
+                    }
                 }
             }) { paddingValue ->
                 MainHomeScreen(video = data,

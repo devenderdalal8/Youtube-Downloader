@@ -1,8 +1,5 @@
 package com.youtube.domain.utils
 
-import android.icu.text.CaseMap.Title
-import kotlin.random.Random
-
 object Constant {
     const val NOTHING = ""
     const val DATABASE_NAME = "youtube_database"
@@ -20,12 +17,17 @@ object Constant {
     const val TITLE = "title"
     const val START_BYTE = "startByte"
     const val VIDEO_URL = "video_url"
+    const val VIDEO_ID = "video_id"
     const val FILE_PATH = "file_path"
-    const val NOTIFICATION_ID = 1234
-    const val DOWNLOADED_NOTIFICATION_ID = 4321
     const val DOWNLOAD_CHANNEL = "download_channel"
     const val DOWNLOAD_NAME = "download Video"
     const val DOWNLOAD_COMPLETE_CHANNEL = "download_complete_channel"
     const val DOWNLOAD_TEXT = "The file has been downloaded successfully."
-    const val DOWNLOAD_START = "Downloading..."
+    const val DOWNLOAD_START = "Please wait for start downloading..."
+    const val TRY_AGAIN = "Please try again"
+    const val CLICK_TO_WATCH = "Please click to watch"
+    const val VIDEO_NOTIFICATION_ID = "video_notification_id"
+    const val ZERO_LONG = 0L
+    const val ZERO = 0
+    const val ZERO_FLOAT = 0F
 }

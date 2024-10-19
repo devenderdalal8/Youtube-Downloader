@@ -19,6 +19,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -39,6 +40,7 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.youtube.domain.model.Video
+import com.youtube.youtube_downloader.presenter.ui.theme.size_300
 
 @SuppressLint("OpaqueUnitKey")
 @ExperimentalAnimationApi
@@ -55,7 +57,7 @@ fun PlayerScreen(
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
     val progressBarVisibility = viewModel.progressBar.collectAsState().value
-    var currentPlaybackPosition by rememberSaveable { mutableStateOf(0L) }
+    var currentPlaybackPosition by rememberSaveable { mutableLongStateOf(0L) }
     var isPlaying by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(key1 = video.videoId) {
@@ -75,7 +77,6 @@ fun PlayerScreen(
             }
         }
     }
-
 
     if (isDownloaded) {
         OnlineVideoPlayer(
@@ -120,10 +121,9 @@ fun OnlineVideoPlayer(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(if (screenHeight > screenWidth) screenWidth else screenHeight)
+            .height(if (screenHeight < screenWidth) screenWidth else size_300)
             .background(Color.Black)
     ) {
-
         AndroidView(
             factory = {
                 PlayerView(context).apply {

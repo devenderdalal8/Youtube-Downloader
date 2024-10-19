@@ -14,7 +14,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -24,7 +23,6 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.youtube.domain.model.Video
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.PlayListScreen
-import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.SearchScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.SettingScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.home.HomeScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.download.DownloadBottomSheet
@@ -43,7 +41,6 @@ fun MainNavigationScreen(
     modifier: Modifier = Modifier,
     navController: NavHostController
 ) {
-    val context = LocalContext.current
     val downloadBottomSheetState = rememberModalBottomSheetState()
     val activeBottomSheet = remember { mutableStateOf<BottomSheet?>(null) }
     val coroutineScope = rememberCoroutineScope()
@@ -97,10 +94,6 @@ fun MainNavigationScreen(
                 PlayListScreen()
             }
 
-            composable(BottomNavScreen.Search.route) {
-                SearchScreen()
-            }
-
             composable(
                 route = "videoPlayer/{videoUrl}",
                 arguments = listOf(navArgument("videoUrl") { type = NavType.StringType }),
@@ -109,8 +102,10 @@ fun MainNavigationScreen(
                 PlayVideoScreen(
                     navController = navController,
                     videoUrl = videoUrl.toString(),
-                ) {
-
+                ) { videos ->
+                    downloadResolution.value = videos
+                    activeBottomSheet.value = BottomSheet.Download
+                    coroutineScope.launch { downloadBottomSheetState.show() }
                 }
             }
             composable(
@@ -171,6 +166,5 @@ fun NavHostController.isBottomBarScreen(): Boolean {
         BottomNavScreen.PlayList.route,
         BottomNavScreen.Download.route,
         BottomNavScreen.Setting.route,
-        BottomNavScreen.Search.route
     ))
 }

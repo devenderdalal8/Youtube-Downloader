@@ -2,37 +2,38 @@ package com.youtube.data.repositoryImpl
 
 import android.util.Log
 import com.youtube.data.dao.VideoDao
-import com.youtube.domain.model.entity.LocalVideo
+import com.youtube.domain.model.Video
 import com.youtube.domain.repository.VideoLocalDataRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
 
 class VideoLocalDataRepositoryImpl @Inject constructor(
     private val videoDao: VideoDao,
 ) : VideoLocalDataRepository {
-    override suspend fun insert(video: LocalVideo) {
+    override suspend fun insert(video: Video) {
         withContext(Dispatchers.IO) {
             videoDao.insert(video)
         }
     }
 
-    override suspend fun update(video: LocalVideo) {
+    override suspend fun update(video: Video) {
         withContext(Dispatchers.IO) {
             videoDao.update(video)
-            Log.d("TAG", "update: ${video.downloadProgress}")
+            Log.d("TAG", "update: ${video}")
         }
     }
 
-    override suspend fun delete(video: LocalVideo) {
+    override suspend fun delete(video: Video) {
         withContext(Dispatchers.IO) {
             videoDao.delete(video)
         }
     }
 
-    override suspend fun getVideos(): Flow<List<LocalVideo>> {
+    override suspend fun getVideos(): Flow<List<Video>> {
         return withContext(Dispatchers.IO) {
             flowOf(videoDao.getVideos())
         }
@@ -45,9 +46,15 @@ class VideoLocalDataRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun videoByBaseUrl(baseUrl: String): LocalVideo {
+    override suspend fun videoByBaseUrl(baseUrl: String): Video {
         return withContext(Dispatchers.IO) {
-            videoDao.videoById(baseUrl)
+            videoDao.videoByBaseUrl(baseUrl = baseUrl)
+        }
+    }
+
+    override suspend fun videoById(id: String): Video {
+        return withContext(Dispatchers.IO) {
+            videoDao.videoById(id = UUID.fromString(id))
         }
     }
 }

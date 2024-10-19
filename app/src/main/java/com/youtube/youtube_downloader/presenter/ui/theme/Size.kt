@@ -106,6 +106,7 @@ val size_99 = 99.dp
 val size_100 = 100.dp
 val size_164 = 164.dp
 val size_200 = 200.dp
+val size_300 = 300.dp
 
 // font size
 val font_1 = 1.sp

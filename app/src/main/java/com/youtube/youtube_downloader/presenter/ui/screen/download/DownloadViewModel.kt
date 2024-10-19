@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.youtube.domain.model.DownloadProgress
 import com.youtube.domain.model.DownloadState
 import com.youtube.domain.model.Video
-import com.youtube.domain.model.entity.LocalVideo
 import com.youtube.domain.repository.VideoLocalDataRepository
 import com.youtube.domain.usecase.GetVideoResolutionUseCase
 import com.youtube.domain.utils.Resource
@@ -24,7 +23,6 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -68,45 +66,29 @@ class DownloadViewModel @Inject constructor(
         return result
     }
 
-    fun storeVideoLocally(video: Video, id: UUID) {
+    fun storeVideoLocally(video: Video) {
         viewModelScope.launch(Dispatchers.IO) {
-            val localVideo = LocalVideo(
-                title = video.title,
-                thumbnailUrl = video.thumbnailUrl,
-                baseUrl = video.baseUrl.toString(),
-                downloadedPath = video.downloadedPath,
-                videoUrl = video.videoUrl,
-                duration = video.duration,
-                size = video.size,
-                description = video.description,
-                videoId = video.videoId,
-                workerId = id,
+            video.copy(
                 downloadProgress = DownloadProgress(
                     totalMegaBytes = video.length.toString(),
                     totalBytes = video.length ?: 0L,
                     progress = 0,
-                    state = DownloadState.DOWNLOADING,
                     uri = Uri.parse(video.videoUrl).toString()
-                )
+                ),
+                state = DownloadState.DOWNLOADING,
             )
-            localDataRepository.insert(localVideo)
+            localDataRepository.insert(video)
         }
     }
 
     fun startDownload(
         context: Context,
-        url: String,
-        downloadedBytes: Long = 0L,
-        fileName: String? = "",
-        baseUrl: String,
+        video: Video
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             context.pauseVideoService()
             context.startDownloadService(
-                url = url,
-                downloadedBytes = downloadedBytes,
-                baseUrl = baseUrl,
-                fileName = fileName.toString()
+                video = video
             )
         }
     }
