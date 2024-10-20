@@ -30,4 +30,5 @@ object Constant {
     const val ZERO_LONG = 0L
     const val ZERO = 0
     const val ZERO_FLOAT = 0F
+    const val URI = "uri"
 }

@@ -1,11 +1,15 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.player
 
+import android.content.ContentResolver
 import android.content.Context
+import android.net.Uri
+import android.util.Log.e
 import androidx.annotation.OptIn
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.youtube.domain.utils.Constant.NOTHING
@@ -63,6 +67,17 @@ class PlayerViewModel @Inject constructor(
             .setMediaMetadata(MediaMetadata.Builder().setDisplayTitle(title).build()).build()
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.prepare()
+    }
+
+    fun setURIMediaItem(videoUri: Uri, audioOnly: Boolean = false) {
+        val resolver: ContentResolver = context.contentResolver
+        resolver.openInputStream(videoUri)?.use {
+            val mediaItem = MediaItem.fromUri(videoUri)
+            exoPlayer.setMediaItem(mediaItem)
+            exoPlayer.prepare()
+        } ?: run {
+            e("ExoPlayer", "playVideoWithExoPlayer: Unable to open content URI ")
+        }
     }
 
     override fun onCleared() {

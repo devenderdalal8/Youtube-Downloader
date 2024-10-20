@@ -3,7 +3,6 @@ package com.youtube.youtube_downloader.presenter.ui.screen.playVideo
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.os.Build
-import android.util.Log
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -70,11 +69,17 @@ import com.youtube.youtube_downloader.util.getTimeDifference
 fun PlayVideoScreen(
     navController: NavController,
     videoUrl: String = NOTHING,
+    videoId: String = NOTHING,
+    isDownloaded: Boolean = false,
     viewModel: MainViewModel = hiltViewModel(),
     onDownloadClicked: (Video) -> Unit
 ) {
     LaunchedEffect(key1 = videoUrl) {
-        viewModel.getVideoDetails(videoUrl)
+        if (!isDownloaded) {
+            viewModel.getVideoDetails(videoUrl)
+        } else {
+            viewModel.getDownloadedVideo(videoId)
+        }
     }
     val uiState = viewModel.videoDetails.collectAsState().value
     val fileSize = viewModel.size.collectAsState().value.first
@@ -85,7 +90,6 @@ fun PlayVideoScreen(
 
     LaunchedEffect(isFullScreen) {
         if (isFullScreen != previousFullScreenState) {
-            Log.e("PlayVideoScreen", isFullScreen.toString())
             previousFullScreenState = isFullScreen
 
             val activity = context as? Activity
@@ -110,7 +114,7 @@ fun PlayVideoScreen(
         is UiState.Success -> {
             val data = uiState.data as Video
             Scaffold(floatingActionButton = {
-                if (!isFullScreen) {
+                if (!isFullScreen && !isDownloaded) {
                     FloatingActionButton(
                         onClick = { onDownloadClicked(data) },
                     ) {
@@ -125,6 +129,7 @@ fun PlayVideoScreen(
                     modifier = Modifier.padding(paddingValue),
                     size = fileSize,
                     isFullScreen = isFullScreen,
+                    isDownloaded = isDownloaded,
                     onFullScreenChangeListener = { fullScreen ->
                         if (fullScreen != isFullScreen) {
                             isFullScreen = fullScreen
@@ -160,6 +165,7 @@ fun MainHomeScreen(
     modifier: Modifier = Modifier,
     size: String,
     isFullScreen: Boolean,
+    isDownloaded: Boolean,
     onFullScreenChangeListener: (Boolean) -> Unit,
 ) {
 
@@ -167,7 +173,7 @@ fun MainHomeScreen(
         modifier = modifier.fillMaxSize()
     ) {
         Column(modifier = modifier) {
-            PlayerScreen(video = video, isDownloaded = false) { fullScreen ->
+            PlayerScreen(video = video, isDownloaded = isDownloaded) { fullScreen ->
                 onFullScreenChangeListener(fullScreen)
             }
             if (!isFullScreen) {

@@ -2,6 +2,7 @@ package com.youtube.youtube_downloader.presenter.ui.screen.player
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.net.Uri
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
@@ -61,7 +62,11 @@ fun PlayerScreen(
     var isPlaying by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(key1 = video.videoId) {
-        viewModel.setMediaItem(videoUrl = video.videoUrl, title = video.title)
+        if (!isDownloaded) {
+            viewModel.setMediaItem(videoUrl = video.videoUrl, title = video.title)
+        } else {
+            viewModel.setURIMediaItem(Uri.parse(video.downloadProgress.uri))
+        }
         viewModel.exoPlayer.seekTo(currentPlaybackPosition)
         if (isPlaying) {
             viewModel.exoPlayer.play()
@@ -78,31 +83,14 @@ fun PlayerScreen(
         }
     }
 
-    if (isDownloaded) {
-        OnlineVideoPlayer(
-            video = video,
-            modifier = modifier,
-            screenWidth = screenWidth,
-            screenHeight = screenHeight,
-            viewModel = viewModel,
-            context = context,
-            progressBarVisibility = progressBarVisibility
-        ) { isFullScreen ->
-            onFullScreenChangeListener(isFullScreen)
-        }
-    } else {
-        OnlineVideoPlayer(
-            video = video,
-            modifier = modifier,
-            viewModel = viewModel,
-            context = context,
-            progressBarVisibility = progressBarVisibility,
-            onFullScreenChangeListener = { isFullScreen ->
-                onFullScreenChangeListener(isFullScreen)
-            },
-            screenWidth = screenWidth,
-            screenHeight = screenHeight
-        )
+    OnlineVideoPlayer(
+        video = video,
+        modifier = modifier, viewModel = viewModel,
+        context = context, progressBarVisibility = progressBarVisibility,
+        screenWidth = screenWidth,
+        screenHeight = screenHeight
+    ) { isFullScreen ->
+        onFullScreenChangeListener(isFullScreen)
     }
 }
 

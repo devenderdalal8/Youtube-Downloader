@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.IntentFilter
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -59,7 +60,6 @@ import com.youtube.domain.model.Video
 import com.youtube.domain.utils.Constant.CLICK_TO_WATCH
 import com.youtube.domain.utils.Constant.DOWNLOAD_COMPLETE
 import com.youtube.domain.utils.Constant.DOWNLOAD_FAILED
-import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.domain.utils.Constant.PROGRESS_DATA
 import com.youtube.domain.utils.Constant.TRY_AGAIN
 import com.youtube.youtube_downloader.R
@@ -81,7 +81,9 @@ import com.youtube.youtube_downloader.presenter.ui.theme.size_84
 @SuppressLint("UnspecifiedRegisterReceiverFlag")
 @Composable
 fun VideoDownloadScreen(
-    modifier: Modifier = Modifier, viewModel: VideoDownloadViewModel = hiltViewModel()
+    modifier: Modifier = Modifier,
+    viewModel: VideoDownloadViewModel = hiltViewModel(),
+    onPlayVideoClickListener: (String) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -108,7 +110,6 @@ fun VideoDownloadScreen(
         }
     }
 
-    val downloadingVideoId = viewModel.videoId.collectAsState().value
     when (val result = viewModel.videos.collectAsState().value) {
         is UiState.Error -> {}
         UiState.Loading -> {
@@ -127,7 +128,10 @@ fun VideoDownloadScreen(
                 }, onLike = {
 
                 },
-                viewModel = viewModel
+                viewModel = viewModel,
+                onPlayVideoClickListener = { id ->
+                    onPlayVideoClickListener(id)
+                }
             )
         }
 
@@ -142,6 +146,7 @@ fun VideoScreen(
     onRemove: (Int, Video) -> Unit,
     onLike: (Int) -> Unit,
     viewModel: VideoDownloadViewModel,
+    onPlayVideoClickListener: (String) -> Unit
 ) {
     LazyColumn {
         itemsIndexed(videos) { index, video ->
@@ -172,7 +177,10 @@ fun VideoScreen(
                     VideoItemView(
                         modifier = modifier,
                         video = video,
-                        viewModel = viewModel
+                        viewModel = viewModel,
+                        onPlayVideoClickListener = {
+                            onPlayVideoClickListener(it)
+                        }
                     )
                 })
         }
@@ -206,8 +214,8 @@ fun VideoItemView(
     modifier: Modifier = Modifier,
     video: Video,
     viewModel: VideoDownloadViewModel,
+    onPlayVideoClickListener: (String) -> Unit
 ) {
-    val context = LocalContext.current
     val downloadState = remember {
         mutableStateOf(video.state)
     }
@@ -222,7 +230,10 @@ fun VideoItemView(
             ShowImage(
                 modifier = modifier.padding(horizontal = size_16),
                 imageUrl = video.thumbnailUrl.toString(),
-                shouldVisible = video.downloadProgress.progress == 100
+                shouldVisible = video.downloadProgress.progress == 100,
+                onPlayVideoClickListener = {
+                    onPlayVideoClickListener(video.id.toString())
+                }
             )
             ShowTitle(
                 modifier = modifier
@@ -355,7 +366,10 @@ fun ShowProgressBar(modifier: Modifier, video: Video) {
 
 @Composable
 fun ShowImage(
-    modifier: Modifier = Modifier, imageUrl: String, shouldVisible: Boolean
+    modifier: Modifier = Modifier,
+    imageUrl: String,
+    shouldVisible: Boolean,
+    onPlayVideoClickListener: () -> Unit
 ) {
     Card(
         modifier = modifier.size(size_80), shape = RoundedCornerShape(size_8)
@@ -381,7 +395,10 @@ fun ShowImage(
                             containerColor = Color.Black.copy(alpha = 0.4f),
                             disabledContentColor = Color.Gray,
                             disabledContainerColor = Color.Gray.copy(alpha = 0.5f)
-                        )
+                        ),
+                        onClick = {
+                            onPlayVideoClickListener()
+                        }
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
@@ -413,5 +430,4 @@ fun DownloadProgress(downloaded: Float) {
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 private fun Preview() {
-    ShowImage(modifier = Modifier, imageUrl = NOTHING, shouldVisible = true)
 }

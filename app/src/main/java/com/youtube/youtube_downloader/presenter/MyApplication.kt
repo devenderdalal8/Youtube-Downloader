@@ -10,4 +10,8 @@ import dagger.hilt.android.HiltAndroidApp
 @HiltAndroidApp
 class MyApplication() : PyApplication() {
 
+    override fun onCreate() {
+        super.onCreate()
+        
+    }
 }

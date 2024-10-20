@@ -1,6 +1,7 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.navigation
 
 import android.os.Build
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -85,8 +86,13 @@ fun MainNavigationScreen(
             }
 
             composable(BottomNavScreen.Download.route) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    VideoDownloadScreen()
+                VideoDownloadScreen { id ->
+                    Log.e("TAG", "VideoDownloadScreen:id $id")
+                    navController.navigate(
+                        "videoPlayer/${
+                            URLEncoder.encode(id, "UTF-8")
+                        }/${true}"
+                    )
                 }
             }
 
@@ -108,6 +114,30 @@ fun MainNavigationScreen(
                     coroutineScope.launch { downloadBottomSheetState.show() }
                 }
             }
+
+            composable(
+                route = "videoPlayer/{videoId}/{isDownloaded}",
+                arguments = listOf(
+                    navArgument("videoId") { type = NavType.StringType },
+                    navArgument("isDownloaded") { type = NavType.BoolType }
+                ),
+            ) { backStackEntry ->
+                val videoId = backStackEntry.arguments?.getString("videoId")
+                val isDownloaded = backStackEntry.arguments?.getBoolean("isDownloaded")
+                Log.e("TAG", "MainNavigationScreen: uuid $videoId , $isDownloaded")
+                PlayVideoScreen(
+                    navController = navController,
+                    videoId = videoId.toString(),
+                    isDownloaded = isDownloaded ?: false
+                ) { videos ->
+                    downloadResolution.value = videos
+                    activeBottomSheet.value = BottomSheet.Download
+                    coroutineScope.launch { downloadBottomSheetState.show() }
+                }
+            }
+
+
+
             composable(
                 route = "watch/{itemId}",
                 arguments = listOf(navArgument("itemId") { type = NavType.StringType }),

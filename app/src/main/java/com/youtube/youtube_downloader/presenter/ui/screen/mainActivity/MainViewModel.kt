@@ -1,20 +1,21 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.mainActivity
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.youtube.domain.model.Video
+import com.youtube.domain.repository.VideoLocalDataRepository
 import com.youtube.domain.usecase.GetVideoDetailsUseCase
 import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.domain.utils.Resource
 import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -24,7 +25,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getVideoDetailsUseCase: GetVideoDetailsUseCase,
-    @ApplicationContext val context: Context
+    private val localDataRepository: VideoLocalDataRepository
 ) : ViewModel() {
 
     private val _size = MutableStateFlow(Pair(NOTHING, 0L))
@@ -64,6 +65,13 @@ class MainViewModel @Inject constructor(
             } catch (ex: Exception) {
                 _videoDetails.value = UiState.Error(ex.message.toString())
             }
+        }
+    }
+
+    fun getDownloadedVideo(videoId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val video = async { localDataRepository.videoById(videoId) }.await()
+            _videoDetails.update { UiState.Success(video) }
         }
     }
 

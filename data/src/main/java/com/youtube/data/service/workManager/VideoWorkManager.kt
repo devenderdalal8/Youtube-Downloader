@@ -26,6 +26,7 @@ import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.domain.utils.Constant.PROGRESS_DATA
 import com.youtube.domain.utils.Constant.START_BYTE
 import com.youtube.domain.utils.Constant.TITLE
+import com.youtube.domain.utils.Constant.URI
 import com.youtube.domain.utils.Constant.VIDEO_ID
 import com.youtube.domain.utils.Constant.VIDEO_NOTIFICATION_ID
 import com.youtube.domain.utils.Constant.VIDEO_URL
@@ -122,6 +123,7 @@ class VideoWorkManager @AssistedInject constructor(
             }
             uris?.let { videoUri ->
                 uri = videoUri
+                Log.e("TAG", "downloadVideo:Path ${videoUri.path} \n URI : $videoUri \n ${videoUri.isAbsolute}", )
                 resolver.openOutputStream(videoUri)?.use { outputStream ->
                     val request = Request.Builder().url(url).apply {
                         if (startByte > 0) header("Range", "bytes=$startByte-")
@@ -155,7 +157,8 @@ class VideoWorkManager @AssistedInject constructor(
                                         lastProgress = progress,
                                         fileSize = totalBytes,
                                         baseUrl = baseUrl,
-                                        videoId = videoId
+                                        videoId = videoId,
+                                        uri = videoUri
                                     )
                                     updateProgress(
                                         title = title,
@@ -190,7 +193,8 @@ class VideoWorkManager @AssistedInject constructor(
         lastProgress: Int,
         fileSize: Long,
         baseUrl: String,
-        videoId: String
+        videoId: String,
+        uri: Uri
     ) {
         withContext(Dispatchers.Main) {
             broadcastIntent.putExtra(LAST_PROGRESS, lastProgress)
@@ -198,6 +202,7 @@ class VideoWorkManager @AssistedInject constructor(
             broadcastIntent.putExtra(FILE_SIZE, fileSize)
             broadcastIntent.putExtra(BASE_URL, baseUrl)
             broadcastIntent.putExtra(VIDEO_ID, videoId)
+            broadcastIntent.putExtra(URI, uri.toString())
             applicationContext.sendBroadcast(broadcastIntent)
         }
     }

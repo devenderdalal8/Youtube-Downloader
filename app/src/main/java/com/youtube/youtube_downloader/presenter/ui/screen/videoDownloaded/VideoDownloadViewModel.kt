@@ -20,6 +20,7 @@ import com.youtube.domain.utils.Constant.FILE_SIZE
 import com.youtube.domain.utils.Constant.LAST_PROGRESS
 import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.domain.utils.Constant.PROGRESS_DATA
+import com.youtube.domain.utils.Constant.URI
 import com.youtube.domain.utils.Constant.VIDEO_ID
 import com.youtube.domain.utils.Constant.ZERO
 import com.youtube.domain.utils.Constant.ZERO_LONG
@@ -41,9 +42,6 @@ class VideoDownloadViewModel @Inject constructor(
     private val getVideoResolutionUseCase: GetVideoResolutionUseCase,
     private val downloadWorkerRepository: DownloadWorkerRepository
 ) : ViewModel() {
-
-    private val _videoId = MutableStateFlow(NOTHING)
-    val videoId = _videoId.asStateFlow()
 
     private val _videos = MutableStateFlow<UiState>(UiState.Loading)
     val videos = _videos.asStateFlow()
@@ -71,7 +69,6 @@ class VideoDownloadViewModel @Inject constructor(
 
     fun resumeDownload(video: Video) {
         viewModelScope.launch(Dispatchers.IO) {
-            _videoId.update { video.id.toString() }
             downloadWorkerRepository.pauseDownload()
             pauseAllDownloads()
             if (video.selectedVideoUrl.toString().isUrlExpired()) {
@@ -162,7 +159,6 @@ class VideoDownloadViewModel @Inject constructor(
     val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent) {
             val id = intent.getStringExtra(VIDEO_ID) ?: return
-            _videoId.update { id }
             val videoDeferred = viewModelScope.async(Dispatchers.IO) {
                 localDataRepository.videoById(id)
             }
@@ -171,6 +167,7 @@ class VideoDownloadViewModel @Inject constructor(
                     val progress = intent.getIntExtra(LAST_PROGRESS, ZERO)
                     val downloadByte = intent.getLongExtra(DOWNLOADED_BYTES, ZERO_LONG)
                     val fileSize = intent.getLongExtra(FILE_SIZE, ZERO_LONG)
+                    val uri = intent.getStringExtra(URI)
                     Log.d(
                         "TAG",
                         "onReceive() returned: progress: $progress \n downloadByte: $downloadByte \n fileSize: $fileSize"
@@ -180,7 +177,8 @@ class VideoDownloadViewModel @Inject constructor(
                             video = videoDeferred.await(),
                             progress = progress,
                             downloadByte = downloadByte,
-                            fileSize = fileSize
+                            fileSize = fileSize,
+                            uri = uri
                         )
                     }
                 }
@@ -202,7 +200,7 @@ class VideoDownloadViewModel @Inject constructor(
     }
 
     private fun updateProgress(
-        progress: Int, downloadByte: Long, video: Video, fileSize: Long
+        progress: Int, downloadByte: Long, video: Video, fileSize: Long, uri: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             video.copy(
@@ -211,7 +209,8 @@ class VideoDownloadViewModel @Inject constructor(
                     progress = progress,
                     megaBytesDownloaded = downloadByte.getFileSize(),
                     totalBytes = fileSize,
-                    totalMegaBytes = fileSize.getFileSize()
+                    totalMegaBytes = fileSize.getFileSize(),
+                    uri = uri.toString()
                 ),
             ).also { updatedVideo ->
                 localDataRepository.update(video = updatedVideo)
