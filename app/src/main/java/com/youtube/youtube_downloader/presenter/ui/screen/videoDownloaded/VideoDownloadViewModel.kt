@@ -18,7 +18,6 @@ import com.youtube.domain.utils.Constant.DOWNLOAD_COMPLETE
 import com.youtube.domain.utils.Constant.FILE_PATH
 import com.youtube.domain.utils.Constant.FILE_SIZE
 import com.youtube.domain.utils.Constant.LAST_PROGRESS
-import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.domain.utils.Constant.PROGRESS_DATA
 import com.youtube.domain.utils.Constant.URI
 import com.youtube.domain.utils.Constant.VIDEO_ID

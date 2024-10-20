@@ -1,5 +1,9 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.navigation
 
+import android.content.Intent
+import android.content.Intent.ACTION_SEND
+import android.content.Intent.EXTRA_TEXT
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +14,7 @@ import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,6 +25,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.youtube.domain.model.Video
@@ -40,12 +46,21 @@ import java.net.URLEncoder
 @Composable
 fun MainNavigationScreen(
     modifier: Modifier = Modifier,
-    navController: NavHostController
+    intent: Intent
 ) {
+    val navController = rememberNavController()
     val downloadBottomSheetState = rememberModalBottomSheetState()
     val activeBottomSheet = remember { mutableStateOf<BottomSheet?>(null) }
     val coroutineScope = rememberCoroutineScope()
     val downloadResolution = remember { mutableStateOf<Video?>(null) }
+
+    LaunchedEffect(Unit) {
+        if (intent.action == ACTION_SEND) {
+            val sharedUrl = intent.getStringExtra(EXTRA_TEXT)
+            val encodedUrl = Uri.encode(sharedUrl)
+            navController.navigate("videoPlayer/$encodedUrl")
+        }
+    }
 
     Scaffold(
         bottomBar = {

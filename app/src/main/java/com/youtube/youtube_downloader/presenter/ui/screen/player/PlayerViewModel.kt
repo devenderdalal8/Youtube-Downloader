@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
-import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.youtube.domain.utils.Constant.NOTHING
@@ -62,14 +61,14 @@ class PlayerViewModel @Inject constructor(
         })
     }
 
-    fun setMediaItem(videoUrl: String?, title: String? = NOTHING, mp3: Boolean = false) {
+    fun setMediaItem(videoUrl: String?, title: String? = NOTHING) {
         val mediaItem = MediaItem.Builder().setUri(videoUrl).setMediaId(videoUrl.toString())
             .setMediaMetadata(MediaMetadata.Builder().setDisplayTitle(title).build()).build()
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.prepare()
     }
 
-    fun setURIMediaItem(videoUri: Uri, audioOnly: Boolean = false) {
+    fun setURIMediaItem(videoUri: Uri) {
         val resolver: ContentResolver = context.contentResolver
         resolver.openInputStream(videoUri)?.use {
             val mediaItem = MediaItem.fromUri(videoUri)
