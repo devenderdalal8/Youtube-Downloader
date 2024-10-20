@@ -46,6 +46,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.youtube.domain.model.Video
+import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.youtube_downloader.R
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeTypography
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_primary
@@ -100,7 +101,6 @@ fun DownloadBottomSheet(
                         viewModel.storeVideoLocally(downloadVideo)
                     }
                     viewModel.startDownload(
-                        context = context,
                         video = downloadVideo
                     )
                 }
@@ -120,10 +120,10 @@ fun MainDownloadBottomSheetScreen(
 ) {
     val context = LocalContext.current
     val videoUrl = remember {
-        mutableStateOf("")
+        mutableStateOf(NOTHING)
     }
     val videoResolution = remember {
-        mutableStateOf("")
+        mutableStateOf(NOTHING)
     }
     Box(
         modifier = modifier, contentAlignment = Alignment.TopCenter

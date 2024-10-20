@@ -58,11 +58,12 @@ import com.youtube.domain.model.DownloadState
 import com.youtube.domain.model.Video
 import com.youtube.domain.utils.Constant.CLICK_TO_WATCH
 import com.youtube.domain.utils.Constant.DOWNLOAD_COMPLETE
+import com.youtube.domain.utils.Constant.DOWNLOAD_FAILED
+import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.domain.utils.Constant.PROGRESS_DATA
 import com.youtube.domain.utils.Constant.TRY_AGAIN
 import com.youtube.youtube_downloader.R
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.UiState
-import com.youtube.youtube_downloader.presenter.ui.screen.navigation.pauseDownloadService
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeTypography
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_onPrimaryContainer
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_tertiary
@@ -76,7 +77,6 @@ import com.youtube.youtube_downloader.presenter.ui.theme.size_32
 import com.youtube.youtube_downloader.presenter.ui.theme.size_8
 import com.youtube.youtube_downloader.presenter.ui.theme.size_80
 import com.youtube.youtube_downloader.presenter.ui.theme.size_84
-import com.youtube.youtube_downloader.util.getFileSize
 
 @SuppressLint("UnspecifiedRegisterReceiverFlag")
 @Composable
@@ -86,14 +86,19 @@ fun VideoDownloadScreen(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        val mIntentFilter = IntentFilter()
-        mIntentFilter.addAction(PROGRESS_DATA)
-        mIntentFilter.addAction(DOWNLOAD_COMPLETE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.registerReceiver(viewModel.mReceiver, mIntentFilter, Context.RECEIVER_NOT_EXPORTED)
-        }else{
+        val mIntentFilter = IntentFilter().apply {
+            addAction(PROGRESS_DATA)
+            addAction(DOWNLOAD_COMPLETE)
+            addAction(DOWNLOAD_FAILED)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(
+                viewModel.mReceiver,
+                mIntentFilter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
             context.registerReceiver(viewModel.mReceiver, mIntentFilter)
-
         }
     }
 
@@ -103,7 +108,6 @@ fun VideoDownloadScreen(
         }
     }
 
-    val progress = viewModel.progress.collectAsState().value
     val downloadingVideoId = viewModel.videoId.collectAsState().value
     when (val result = viewModel.videos.collectAsState().value) {
         is UiState.Error -> {}
@@ -116,21 +120,17 @@ fun VideoDownloadScreen(
         is UiState.Success -> {
             val videos = result.data as List<Video>
             VideoScreen(
-                modifier = modifier,
-                videos = videos,
-                onRemove = { position ->
-                    context.pauseDownloadService()
-                    viewModel.deleteVideo(position)
+                modifier = modifier, videos = videos,
+                onRemove = { position, video ->
+                    viewModel.pauseVideoService(video)
+                    viewModel.deleteVideo(position = position, video = video)
+                }, onLike = {
+
                 },
-                onLike = { position ->
-                    context.pauseDownloadService()
-                viewModel.deleteVideo(position)
-                },
-                progress = progress,
-                viewModel = viewModel,
-                downloadingVideoId = downloadingVideoId
+                viewModel = viewModel
             )
         }
+
         else -> {}
     }
 }
@@ -139,11 +139,9 @@ fun VideoDownloadScreen(
 fun VideoScreen(
     modifier: Modifier = Modifier,
     videos: List<Video>,
-    onRemove: (Int) -> Unit,
+    onRemove: (Int, Video) -> Unit,
     onLike: (Int) -> Unit,
-    progress: Triple<Float, Long, String>,
     viewModel: VideoDownloadViewModel,
-    downloadingVideoId: String,
 ) {
     LazyColumn {
         itemsIndexed(videos) { index, video ->
@@ -152,8 +150,9 @@ fun VideoScreen(
             val dismissState = rememberSwipeToDismissBoxState(confirmValueChange = {
                 when (it) {
                     SwipeToDismissBoxValue.StartToEnd -> {
-                        onRemove(currentItem)
-                        Toast.makeText(context, "StartToEnd", Toast.LENGTH_SHORT).show()
+                        onRemove(currentItem, video)
+                        Toast.makeText(context, "Deleted : ${video.title}", Toast.LENGTH_SHORT)
+                            .show()
                     }
 
                     SwipeToDismissBoxValue.EndToStart -> {
@@ -171,11 +170,9 @@ fun VideoScreen(
                 backgroundContent = { DismissBackground(dismissState) },
                 content = {
                     VideoItemView(
-                        video = video,
                         modifier = modifier,
-                        progress = progress,
-                        viewModel = viewModel,
-                        downloadingVideoId = downloadingVideoId
+                        video = video,
+                        viewModel = viewModel
                     )
                 })
         }
@@ -208,9 +205,7 @@ fun DismissBackground(dismissState: SwipeToDismissBoxState) {
 fun VideoItemView(
     modifier: Modifier = Modifier,
     video: Video,
-    progress: Triple<Float, Long, String>,
     viewModel: VideoDownloadViewModel,
-    downloadingVideoId: String,
 ) {
     val context = LocalContext.current
     val downloadState = remember {
@@ -233,40 +228,26 @@ fun VideoItemView(
                 modifier = modifier
                     .weight(1f)
                     .padding(top = size_8, end = size_8),
-                video = video,
-                progress = progress,
-                downloadingVideoId = downloadingVideoId
+                video = video
             )
             if (video.downloadProgress.progress != 100) {
                 ShowPlayPauseIcon(modifier = modifier, state = video.state) {
                     when (downloadState.value) {
                         DownloadState.PAUSED -> {
                             downloadState.value = DownloadState.DOWNLOADING // Update the state
-                            viewModel.resumeDownload(
-                                context = context,
-                                baseUrl = video.baseUrl.toString(),
-                                videoUrl = video.selectedVideoUrl.toString(),
-                                resolution = video.selectedResolution.toString(),
-                                id = video.id.toString()
-                            )
+                            viewModel.resumeDownload(video = video)
                         }
 
                         DownloadState.DOWNLOADING -> {
                             downloadState.value = DownloadState.PAUSED // Update the state
                             viewModel.pauseVideoService(
-                                context = context, baseUrl = video.baseUrl.toString()
+                                video = video
                             )
                         }
 
                         DownloadState.FAILED, DownloadState.PENDING -> {
                             downloadState.value = DownloadState.DOWNLOADING // Update the state
-                            viewModel.resumeDownload(
-                                context = context,
-                                baseUrl = video.baseUrl.toString(),
-                                videoUrl = video.selectedVideoUrl.toString(),
-                                resolution = video.selectedResolution.toString(),
-                                id = video.id.toString()
-                            )
+                            viewModel.resumeDownload(video = video)
                         }
 
                         else -> {}
@@ -312,10 +293,7 @@ fun ShowPlayPauseIcon(
 
 @Composable
 fun ShowTitle(
-    modifier: Modifier,
-    video: Video,
-    progress: Triple<Float, Long, String>,
-    downloadingVideoId: String
+    modifier: Modifier, video: Video
 ) {
     Column(modifier = modifier) {
         Text(
@@ -325,29 +303,29 @@ fun ShowTitle(
             ), maxLines = 2, overflow = TextOverflow.Ellipsis
         )
 
-        if (downloadingVideoId.equals(video.id)) {
-            ShowProgressBar(modifier = modifier, video = video, progress = progress)
-        }
+        ShowProgressBar(modifier = modifier, video = video)
     }
 }
 
 @Composable
-fun ShowProgressBar(modifier: Modifier, video: Video, progress: Triple<Float, Long, String>) {
+fun ShowProgressBar(modifier: Modifier, video: Video) {
     when {
-        video.downloadProgress.progress != 100 -> {
-            if (progress.third.isNotEmpty() && progress.second != 0L) {
-                Spacer(modifier = modifier.height(size_8))
-                Text(
-                    text = "${progress.second.getFileSize()} / ${progress.third}",
-                    style = YoutubeTypography.titleSmall.copy(
-                        fontSize = font_12, fontWeight = FontWeight.W700
+        video.downloadProgress.progress != 100 || video.state == DownloadState.DOWNLOADING -> {
+            with(video.downloadProgress) {
+                if (megaBytesDownloaded.isNotEmpty() && (this.progress != 0)) {
+                    Spacer(modifier = modifier.height(size_8))
+                    Text(
+                        text = "$megaBytesDownloaded / $totalMegaBytes",
+                        style = YoutubeTypography.titleSmall.copy(
+                            fontSize = font_12, fontWeight = FontWeight.W700
+                        )
                     )
-                )
-                Spacer(modifier = modifier.height(size_8))
-                if (video.state == DownloadState.COMPLETED) {
-                    Spacer(modifier = modifier.height(size_32)) // Or keep it as it is
-                } else {
-                    DownloadProgress(downloaded = progress.first / 100)
+                    Spacer(modifier = modifier.height(size_8))
+                    if (video.state == DownloadState.COMPLETED) {
+                        Spacer(modifier = modifier.height(size_32)) // Or keep it as it is
+                    } else {
+                        DownloadProgress(downloaded = this.progress.toFloat() / 100)
+                    }
                 }
             }
         }
@@ -435,5 +413,5 @@ fun DownloadProgress(downloaded: Float) {
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 private fun Preview() {
-    ShowImage(modifier = Modifier, imageUrl = "", shouldVisible = true)
+    ShowImage(modifier = Modifier, imageUrl = NOTHING, shouldVisible = true)
 }

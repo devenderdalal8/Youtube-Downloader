@@ -54,6 +54,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.youtube.domain.model.Video
+import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.youtube_downloader.R
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.MainViewModel
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.UiState
@@ -68,7 +69,7 @@ import com.youtube.youtube_downloader.util.getTimeDifference
 @Composable
 fun PlayVideoScreen(
     navController: NavController,
-    videoUrl: String = "",
+    videoUrl: String = NOTHING,
     viewModel: MainViewModel = hiltViewModel(),
     onDownloadClicked: (Video) -> Unit
 ) {
@@ -115,7 +116,7 @@ fun PlayVideoScreen(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_file_download_icon),
-                            contentDescription = "",
+                            contentDescription = NOTHING,
                         )
                     }
                 }
@@ -211,7 +212,7 @@ fun VideoDescription(description: String?, modifier: Modifier) {
                 )
                 Icon(
                     imageVector = if (!expanded.value) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                    contentDescription = "",
+                    contentDescription = NOTHING,
                     modifier = modifier.padding(vertical = size_8)
                 )
             }

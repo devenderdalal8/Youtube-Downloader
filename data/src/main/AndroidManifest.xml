@@ -18,8 +18,8 @@
         android:requestLegacyExternalStorage="true"
         android:theme="@style/Theme.YoutubeDownloader">
         <service
-            android:name=".service.VideoDownloadService"
-            android:foregroundServiceType="dataSync" />
+            android:name=".service.workManager.VideoWorkManager"
+            android:foregroundServiceType="dataSync"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
-
 </manifest>

@@ -1,17 +1,15 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.download
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.youtube.domain.model.DownloadProgress
 import com.youtube.domain.model.DownloadState
 import com.youtube.domain.model.Video
+import com.youtube.domain.repository.DownloadWorkerRepository
 import com.youtube.domain.repository.VideoLocalDataRepository
 import com.youtube.domain.usecase.GetVideoResolutionUseCase
 import com.youtube.domain.utils.Resource
-import com.youtube.youtube_downloader.presenter.ui.screen.navigation.pauseDownloadService
-import com.youtube.youtube_downloader.presenter.ui.screen.navigation.startDownloadService
 import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +26,8 @@ import javax.inject.Inject
 @HiltViewModel
 class DownloadViewModel @Inject constructor(
     private val getVideoResolutionUseCase: GetVideoResolutionUseCase,
-    private val localDataRepository: VideoLocalDataRepository
+    private val localDataRepository: VideoLocalDataRepository,
+    private val downloadWorkerRepository: DownloadWorkerRepository
 ) : ViewModel() {
 
     private val _downloadVideoUiState =
@@ -68,7 +67,7 @@ class DownloadViewModel @Inject constructor(
 
     fun storeVideoLocally(video: Video) {
         viewModelScope.launch(Dispatchers.IO) {
-            video.copy(
+            val updatedVideo = video.copy(
                 downloadProgress = DownloadProgress(
                     totalMegaBytes = video.length.toString(),
                     totalBytes = video.length ?: 0L,
@@ -77,28 +76,43 @@ class DownloadViewModel @Inject constructor(
                 ),
                 state = DownloadState.DOWNLOADING,
             )
-            localDataRepository.insert(video)
+            localDataRepository.insert(updatedVideo)
         }
     }
 
-    fun startDownload(
-        context: Context,
-        video: Video
-    ) {
+    fun startDownload(video: Video) {
         viewModelScope.launch(Dispatchers.IO) {
-            context.pauseVideoService()
-            context.startDownloadService(
-                video = video
+            downloadWorkerRepository.pauseDownload()
+            pauseAllDownloads()
+            val workId = downloadWorkerRepository.startDownload(video = video)
+            val updatedVideo = video.copy(
+                workId = workId
             )
+            localDataRepository.update(updatedVideo)
         }
     }
 
-    private fun Context.pauseVideoService() {
+    private fun pauseAllDownloads() {
         viewModelScope.launch(Dispatchers.IO) {
-            pauseDownloadService()
+            val videos = async { localDataRepository.getVideos() }.await()
+            videos.collect { video ->
+                video.forEach { item ->
+                    if (item.state == DownloadState.DOWNLOADING) {
+                        pauseVideoService(item)
+                    }
+                }
+            }
         }
     }
 
+    private fun pauseVideoService(video: Video) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val updatedVideo = video.copy(
+                state = DownloadState.PAUSED,
+            )
+            localDataRepository.update(updatedVideo)
+        }
+    }
 
     private suspend fun getSize(videoUrl: String): String {
         return withContext(Dispatchers.IO) {

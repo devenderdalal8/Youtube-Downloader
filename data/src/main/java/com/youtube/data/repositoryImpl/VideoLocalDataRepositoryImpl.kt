@@ -30,6 +30,7 @@ class VideoLocalDataRepositoryImpl @Inject constructor(
     override suspend fun delete(video: Video) {
         withContext(Dispatchers.IO) {
             videoDao.delete(video)
+            Log.e("TAG", "delete: $video", )
         }
     }
 

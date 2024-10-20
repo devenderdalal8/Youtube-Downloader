@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.youtube.domain.model.Video
 import com.youtube.domain.usecase.GetVideoDetailsUseCase
+import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.domain.utils.Resource
 import com.youtube.youtube_downloader.util.getFileSize
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +27,7 @@ class MainViewModel @Inject constructor(
     @ApplicationContext val context: Context
 ) : ViewModel() {
 
-    private val _size = MutableStateFlow(Pair("", 0L))
+    private val _size = MutableStateFlow(Pair(NOTHING, 0L))
     val size = _size.asStateFlow()
 
     private val _videoDetails = MutableStateFlow<UiState>(UiState.Loading)

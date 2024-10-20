@@ -225,7 +225,7 @@ def download_playlist(url, mp3=True):
 
 def search_video(query):
     url_details = YouTubeVideoFetcher(query)
-    return url_details.search_videos(max_results=5)
+    return url_details.search_videos(max_results=3)
 
 def download_channel(url):
     downloader = ChannelDownloader(url)

@@ -1,11 +1,13 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.youtube.domain.model.VideoResponse
 import com.youtube.domain.usecase.GetSearchVideoUseCase
+import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.domain.utils.Resource
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,7 +40,7 @@ class HomeViewModel @Inject constructor(
     private val _loading = MutableStateFlow(false)
     val loading = _loading.asStateFlow()
 
-    private val _query = MutableStateFlow("")
+    private val _query = MutableStateFlow(NOTHING)
 
     private var job: Job? = null
 
@@ -76,9 +78,10 @@ class HomeViewModel @Inject constructor(
 
     private suspend fun search(query: String): Flow<List<String>> = flow {
         job?.cancel()
-        delay(1000)
+        delay(100)
         job = viewModelScope.launch(Dispatchers.IO) {
             _loading.value = true
+            val search = "https://www.youtube.com/watch?v=dCmp56tSSmA"
             when (val result = getSearchVideoUseCase(query)) {
                 is Resource.Success -> {
                     val gson = Gson()
@@ -86,6 +89,7 @@ class HomeViewModel @Inject constructor(
                     val data = gson.fromJson<VideoResponse>(result.data.toString(), type)
                     _uiState.value = UiState.Success(data)
                     _loading.value = false
+                    Log.w("TAG", "search: $data", )
                 }
 
                 is Resource.Error -> {

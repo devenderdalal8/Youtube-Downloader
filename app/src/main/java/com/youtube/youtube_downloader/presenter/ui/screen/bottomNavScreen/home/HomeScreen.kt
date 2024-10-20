@@ -40,6 +40,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.youtube.domain.model.SearchVideo
 import com.youtube.domain.model.VideoResponse
+import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.UiState
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeTypography
 import com.youtube.youtube_downloader.presenter.ui.theme.font_12
@@ -60,7 +61,7 @@ fun HomeScreen(
 ) {
 
     val uiState = viewModel.uiState.collectAsState().value
-    val query = rememberSaveable { mutableStateOf("") }
+    val query = rememberSaveable { mutableStateOf(NOTHING) }
 
     val context = LocalContext.current
     val isLoading = viewModel.loading.collectAsState().value

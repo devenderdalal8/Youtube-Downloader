@@ -8,6 +8,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import com.youtube.domain.utils.Constant.NOTHING
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,7 +58,7 @@ class PlayerViewModel @Inject constructor(
         })
     }
 
-    fun setMediaItem(videoUrl: String?, title: String? = "", mp3: Boolean = false) {
+    fun setMediaItem(videoUrl: String?, title: String? = NOTHING, mp3: Boolean = false) {
         val mediaItem = MediaItem.Builder().setUri(videoUrl).setMediaId(videoUrl.toString())
             .setMediaMetadata(MediaMetadata.Builder().setDisplayTitle(title).build()).build()
         exoPlayer.setMediaItem(mediaItem)

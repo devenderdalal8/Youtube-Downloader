@@ -1,26 +1,23 @@
 package com.youtube.data.service.notification
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.work.ForegroundInfo
 import com.youtube.data.R
 
 object VideoNotificationManager {
     private const val DEFAULT_CHANNEL_ID = "default_channel_id"
     private const val DEFAULT_CHANNEL_NAME = "General Notifications"
 
-
     fun showNotification(
         context: Context,
         title: String,
-        message: String,
-        notificationId: Int = 1
-    ): Notification {
-        val notificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        message: String, notificationId: Int = 1, notificationManager: NotificationManager
+    ): ForegroundInfo {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 DEFAULT_CHANNEL_ID,
@@ -36,8 +33,7 @@ object VideoNotificationManager {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .build()
-        notificationManager.notify(notificationId, notification)
-        return notification
+        return ForegroundInfo(notificationId, notification)
     }
 
     fun showProgressNotification(
@@ -45,10 +41,9 @@ object VideoNotificationManager {
         title: String,
         message: String,
         notificationId: Int = 1,
-        progress: Int,
-    ): Notification {
-        val notificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        progress: Int, notificationManager: NotificationManager
+    ): ForegroundInfo {
+        Log.d("TAG", "showProgressNotification:  title: $title \n $notificationId")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 DEFAULT_CHANNEL_ID,
@@ -65,13 +60,7 @@ object VideoNotificationManager {
             .setAutoCancel(true)
             .setProgress(100, progress, false)
             .build()
-        notificationManager.notify(notificationId, notification)
-        return notification
+        return ForegroundInfo(notificationId, notification)
     }
 
-    fun cancelNotification(context: Context, notificationId: Int) {
-        val notificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(notificationId)
-    }
 }

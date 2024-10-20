@@ -15,8 +15,10 @@ class PythonScriptRepositoryImpl @Inject constructor(
         val result = withContext(Dispatchers.IO) {
             try {
                 val data = callPythonFunction(functionName, *args)
+                Log.e("TAG", "downloadAsync: $data", )
                 Resource.Success(data)
             } catch (ex: Exception) {
+                Log.e("TAG", "downloadAsync: ${ex.message}", )
                 Resource.Error(ex.message.toString())
             }
         }
