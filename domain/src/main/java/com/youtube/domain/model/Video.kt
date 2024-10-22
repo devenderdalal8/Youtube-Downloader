@@ -39,9 +39,10 @@ data class Video(
     var state: DownloadState = DownloadState.PENDING,
     @SerializedName("notification_id") val notificationId: Int = Random.nextInt(Int.MAX_VALUE),
     @SerializedName("video_type") var videoType: VideoType = VideoType.VIDEO,
-    @SerializedName("work_id") var workId: UUID = UUID.randomUUID()
+    @SerializedName("work_id") var workId: UUID = UUID.randomUUID(),
+    @SerializedName("resolution_details") val resolutionDetails: List<VideoDetails>? = emptyList()
 ) {
     override fun toString(): String {
-        return "Video(id=$id, videoId=$videoId, title=$title, thumbnailUrl=$thumbnailUrl, videoUrl=$videoUrl, baseUrl=$baseUrl, duration=$duration, views='$views', likes=$likes, resolution=$resolution, uploadDate='$uploadDate', channelUrl=$channelUrl, channelId=$channelId, size=$size, length=$length, isDownloaded=$isDownloaded, filePath=$filePath, error=$error, selectedResolution=$selectedResolution, isExpire=$isExpire, selectedVideoUrl=$selectedVideoUrl, downloadProgress=$downloadProgress, state=$state, notificationId=$notificationId, videoType=$videoType, workId=$workId)"
+        return "Video(id=$id, videoId=$videoId, title=$title, baseUrl=$baseUrl, duration=$duration, views='$views', likes=$likes, uploadDate='$uploadDate', channelUrl=$channelUrl, channelId=$channelId, size=$size, length=$length, isDownloaded=$isDownloaded, filePath=$filePath, error=$error, selectedResolution=$selectedResolution, isExpire=$isExpire, downloadProgress=$downloadProgress, state=$state, notificationId=$notificationId, videoType=$videoType, workId=$workId, resolutionDetails=$resolutionDetails)"
     }
 }

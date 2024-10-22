@@ -2,10 +2,11 @@ package com.youtube.youtube_downloader.util
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import java.net.URL
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.Calendar
@@ -94,4 +95,12 @@ fun String.isUrlExpired(): Boolean {
     }
 
     return true // If no expire param is found, consider the URL expired
+}
+
+infix fun <T> MutableStateFlow<T>.value(value: T) {
+    this.value = value
+}
+
+infix fun <T> MutableStateFlow<T>.update(value: T) {
+    this.update { value }
 }

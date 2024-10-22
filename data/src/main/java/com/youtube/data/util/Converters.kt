@@ -1,15 +1,11 @@
 package com.youtube.data.util
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.youtube.domain.model.DownloadProgress
 import com.youtube.domain.model.DownloadState
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import com.youtube.domain.model.VideoDetails
 
 class Converters {
     private val gson = Gson()
@@ -46,5 +42,15 @@ class Converters {
     fun fromDownloadState(state: String): DownloadState {
         val type = object : TypeToken<DownloadState>() {}.type
         return gson.fromJson(state, type)
+    }
+
+    @TypeConverter
+    fun fromResolutionDetailsList(value: List<VideoDetails>?): String? {
+        return gson.toJson(value)
+    }
+    @TypeConverter
+    fun toResolutionDetailsList(value: String?): List<VideoDetails>? {
+        val listType = object : TypeToken<List<VideoDetails>>() {}.type
+        return gson.fromJson(value, listType)
     }
 }

@@ -83,8 +83,8 @@ chaquopy {
 dependencies {
     implementation(project(":domain"))
     implementation (libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
     implementation (libs.androidx.hilt.navigation.compose)
-    implementation (libs.androidx.hilt.work)
     annotationProcessor(libs.androidx.hilt.compiler)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

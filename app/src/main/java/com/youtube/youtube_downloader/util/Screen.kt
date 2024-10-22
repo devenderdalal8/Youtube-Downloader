@@ -17,7 +17,8 @@ sealed class Route(val route: String) {
 }
 
 enum class BottomSheet {
-    Download
+    Download,
+    MODIFY_VIDEO
 }
 
 sealed class BottomNavScreen(val route: String, val title: String, val icon: Int) {

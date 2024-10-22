@@ -1,20 +1,24 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.mainActivity
 
 import android.Manifest
-import android.content.Intent.ACTION_SEND
-import android.content.Intent.EXTRA_TEXT
+import android.content.Context
+import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import androidx.navigation.compose.rememberNavController
+import com.youtube.domain.utils.Constant.DOWNLOAD_COMPLETE
+import com.youtube.domain.utils.Constant.DOWNLOAD_FAILED
+import com.youtube.domain.utils.Constant.PROGRESS_DATA
 import com.youtube.youtube_downloader.presenter.ui.screen.navigation.MainNavigationScreen
+import com.youtube.youtube_downloader.presenter.ui.screen.videoDownloaded.VideoDownloadViewModel
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeDownloaderTheme
+import com.youtube.youtube_downloader.util.broadcastReceiver.VideoBroadCastReceiver
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -23,20 +27,28 @@ class MainActivity: ComponentActivity() {
     private val requestPermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ -> }
 
+    private val broadcastReceiver = VideoBroadCastReceiver()
+    private val videoDownloadViewModel: VideoDownloadViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestPermissions()
         requestNotificationPermission()
         setContent {
-
-
             YoutubeDownloaderTheme {
                 MainNavigationScreen(
                     modifier = Modifier,
-                    intent= intent
+                    intent = intent,
+                    videoDownloadViewModel = videoDownloadViewModel
                 )
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        broadcastReceiver.setVideoUpdateFlow(videoDownloadViewModel.videoUpdates)
+        registerBroadcastReceiver()
     }
 
     private fun requestPermissions() {
@@ -69,5 +81,27 @@ class MainActivity: ComponentActivity() {
                 requestPermissionsLauncher.launch(permissions)
             }
         }
+    }
+
+    private fun registerBroadcastReceiver() {
+        val mIntentFilter = IntentFilter().apply {
+            addAction(PROGRESS_DATA)
+            addAction(DOWNLOAD_COMPLETE)
+            addAction(DOWNLOAD_FAILED)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            this.registerReceiver(
+                broadcastReceiver,
+                mIntentFilter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            this.registerReceiver(broadcastReceiver, mIntentFilter)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        this.unregisterReceiver(broadcastReceiver)
     }
 }

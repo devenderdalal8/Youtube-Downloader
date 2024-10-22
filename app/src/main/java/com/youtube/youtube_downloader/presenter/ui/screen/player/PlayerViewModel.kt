@@ -12,6 +12,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.youtube.domain.utils.Constant.NOTHING
+import com.youtube.youtube_downloader.util.value
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,19 +43,19 @@ class PlayerViewModel @Inject constructor(
             override fun onPlaybackStateChanged(playbackState: Int) {
                 when (playbackState) {
                     Player.STATE_BUFFERING -> {
-                        _progressBarVisibility.value = true
+                        _progressBarVisibility value true
                     }
 
                     Player.STATE_READY -> {
-                        _progressBarVisibility.value = false
+                        _progressBarVisibility value false
                     }
 
                     Player.STATE_IDLE -> {
-                        _progressBarVisibility.value = false
+                        _progressBarVisibility value false
                     }
 
                     Player.STATE_ENDED -> {
-                        _progressBarVisibility.value = false
+                        _progressBarVisibility value false
                     }
                 }
             }

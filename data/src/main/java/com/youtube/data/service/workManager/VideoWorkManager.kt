@@ -9,10 +9,14 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.youtube.data.service.notification.VideoNotificationManager
+import com.youtube.data.util.getFileSize
+import com.youtube.domain.model.DownloadState
+import com.youtube.domain.repository.VideoLocalDataRepository
 import com.youtube.domain.utils.Constant.BASE_URL
 import com.youtube.domain.utils.Constant.DOWNLOADED_BYTES
 import com.youtube.domain.utils.Constant.DOWNLOAD_COMPLETE
@@ -32,22 +36,29 @@ import com.youtube.domain.utils.Constant.VIDEO_NOTIFICATION_ID
 import com.youtube.domain.utils.Constant.VIDEO_URL
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.File
 import kotlin.random.Random
 
 @HiltWorker
 class VideoWorkManager @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
+    private var localDataRepository: VideoLocalDataRepository
 ) : CoroutineWorker(context, workerParams) {
 
     private val notificationManager by lazy {
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     }
+
+    private val updateScope = CoroutineScope(Dispatchers.IO)
+    private var updateJob: Job? = null
 
     companion object {
         private val broadcastIntent = Intent()
@@ -56,6 +67,7 @@ class VideoWorkManager @AssistedInject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     override suspend fun doWork(): Result {
         val notificationId = inputData.getInt(VIDEO_NOTIFICATION_ID, Random.nextInt())
         val title = inputData.getString(TITLE) ?: Result.failure()
@@ -63,7 +75,6 @@ class VideoWorkManager @AssistedInject constructor(
         val baseUrl = inputData.getString(BASE_URL) ?: return Result.failure()
         val downloadBytes = inputData.getLong(START_BYTE, 0)
         val videoId = inputData.getString(VIDEO_ID) ?: return Result.failure()
-
         val notification = VideoNotificationManager.showNotification(
             context = applicationContext,
             title = title.toString(),
@@ -91,6 +102,7 @@ class VideoWorkManager @AssistedInject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private suspend fun downloadVideo(
         title: String,
         url: String,
@@ -109,21 +121,38 @@ class VideoWorkManager @AssistedInject constructor(
                 put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
                 put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             }
-            val uris = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValue)
-            } else {
-                val downloadsDir =
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                val file = File(downloadsDir, title)
-
-                if (!downloadsDir.exists()) {
-                    downloadsDir.mkdirs()
+            // Check if the video already exists
+            val existingUri = resolver.query(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                null,
+                "${MediaStore.MediaColumns.DISPLAY_NAME} = ?",
+                arrayOf("$title.mp4"),
+                null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val idIndex = cursor.getColumnIndex(MediaStore.MediaColumns._ID)
+                    if (idIndex != -1) {
+                        Uri.withAppendedPath(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            cursor.getString(idIndex)
+                        )
+                    } else {
+                        null
+                    }
+                } else {
+                    null
                 }
-                Uri.fromFile(file)
             }
-            uris?.let { videoUri ->
-                uri = videoUri
-                Log.e("TAG", "downloadVideo:Path ${videoUri.path} \n URI : $videoUri \n ${videoUri.isAbsolute}", )
+
+            uri = existingUri ?: resolver.insert(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                contentValue
+            )
+            uri?.let { videoUri ->
+                Log.e(
+                    "TAG",
+                    "downloadVideo:Path ${videoUri.path} \n URI : $videoUri \n ${videoUri.isAbsolute}"
+                )
                 resolver.openOutputStream(videoUri)?.use { outputStream ->
                     val request = Request.Builder().url(url).apply {
                         if (startByte > 0) header("Range", "bytes=$startByte-")
@@ -197,6 +226,13 @@ class VideoWorkManager @AssistedInject constructor(
         uri: Uri
     ) {
         withContext(Dispatchers.Main) {
+            updateProgressInLocal(
+                baseUrl = baseUrl,
+                progress = lastProgress,
+                downloadByte = totalBytesRead,
+                fileSize = fileSize,
+                uri = uri.toString()
+            )
             broadcastIntent.putExtra(LAST_PROGRESS, lastProgress)
             broadcastIntent.putExtra(DOWNLOADED_BYTES, totalBytesRead)
             broadcastIntent.putExtra(FILE_SIZE, fileSize)
@@ -232,7 +268,7 @@ class VideoWorkManager @AssistedInject constructor(
         broadcastIntent.putExtra(BASE_URL, baseUrl)
         broadcastIntent.putExtra(FILE_PATH, filePath)
         applicationContext.sendBroadcast(broadcastIntent)
-
+        updateDownloadedInLocal(baseUrl = baseUrl)
     }
 
     private suspend fun showCompleteNotification(title: String, notificationId: Int) {
@@ -250,6 +286,39 @@ class VideoWorkManager @AssistedInject constructor(
         broadcastIntent.action = DOWNLOAD_FAILED
         broadcastIntent.putExtra(BASE_URL, baseUrl)
         applicationContext.sendBroadcast(broadcastIntent)
+    }
+
+    private suspend fun updateDownloadedInLocal(baseUrl: String) {
+        updateJob?.cancelAndJoin()
+        updateJob = updateScope.launch {
+            val video = localDataRepository.videoByBaseUrl(baseUrl)
+            video.copy(
+                state = DownloadState.FAILED
+            ).also { updatedVideo ->
+                localDataRepository.update(updatedVideo)
+            }
+        }
+    }
+
+    private suspend fun updateProgressInLocal(
+        progress: Int, downloadByte: Long, fileSize: Long, uri: String?, baseUrl: String
+    ) {
+        updateJob?.cancelAndJoin()
+        updateJob = updateScope.launch {
+            val video = localDataRepository.videoByBaseUrl(baseUrl)
+            video.copy(
+                downloadProgress = video.downloadProgress.copy(
+                    bytesDownloaded = downloadByte,
+                    progress = progress,
+                    megaBytesDownloaded = downloadByte.getFileSize(),
+                    totalBytes = fileSize,
+                    totalMegaBytes = fileSize.getFileSize(),
+                    uri = uri.toString()
+                ),
+            ).also { updatedVideo ->
+                localDataRepository.update(video = updatedVideo)
+            }
+        }
     }
 
 }

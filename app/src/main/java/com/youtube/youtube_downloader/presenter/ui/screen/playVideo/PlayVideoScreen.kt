@@ -128,6 +128,7 @@ fun PlayVideoScreen(
                 MainHomeScreen(video = data,
                     modifier = Modifier.padding(paddingValue),
                     size = fileSize,
+                    viewModel = viewModel,
                     isFullScreen = isFullScreen,
                     isDownloaded = isDownloaded,
                     onFullScreenChangeListener = { fullScreen ->
@@ -163,11 +164,17 @@ fun PlayVideoScreen(
 fun MainHomeScreen(
     video: Video,
     modifier: Modifier = Modifier,
+    viewModel: MainViewModel,
     size: String,
     isFullScreen: Boolean,
     isDownloaded: Boolean,
     onFullScreenChangeListener: (Boolean) -> Unit,
 ) {
+    LaunchedEffect(video.id) {
+        if(video.resolutionDetails?.isEmpty() == true){
+            viewModel.getVideoDetails(video.resolution, video.baseUrl)
+        }
+    }
 
     Box(
         modifier = modifier.fillMaxSize()

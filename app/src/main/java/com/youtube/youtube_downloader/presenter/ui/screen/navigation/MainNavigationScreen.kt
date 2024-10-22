@@ -4,8 +4,6 @@ import android.content.Intent
 import android.content.Intent.ACTION_SEND
 import android.content.Intent.EXTRA_TEXT
 import android.net.Uri
-import android.os.Build
-import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -36,6 +35,8 @@ import com.youtube.youtube_downloader.presenter.ui.screen.download.DownloadBotto
 import com.youtube.youtube_downloader.presenter.ui.screen.playVideo.PlayVideoScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.splashScreen.SplashScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.videoDownloaded.VideoDownloadScreen
+import com.youtube.youtube_downloader.presenter.ui.screen.videoDownloaded.VideoDownloadViewModel
+import com.youtube.youtube_downloader.presenter.ui.screen.videoDownloaded.bottomSheet.VideoDownloadedBottomSheet
 import com.youtube.youtube_downloader.util.BottomNavScreen
 import com.youtube.youtube_downloader.util.BottomSheet
 import com.youtube.youtube_downloader.util.Route
@@ -46,13 +47,14 @@ import java.net.URLEncoder
 @Composable
 fun MainNavigationScreen(
     modifier: Modifier = Modifier,
-    intent: Intent
+    intent: Intent,
+    videoDownloadViewModel: VideoDownloadViewModel
 ) {
     val navController = rememberNavController()
     val downloadBottomSheetState = rememberModalBottomSheetState()
     val activeBottomSheet = remember { mutableStateOf<BottomSheet?>(null) }
     val coroutineScope = rememberCoroutineScope()
-    val downloadResolution = remember { mutableStateOf<Video?>(null) }
+    val selectedVideo = remember { mutableStateOf(Video()) }
 
     LaunchedEffect(Unit) {
         if (intent.action == ACTION_SEND) {
@@ -101,13 +103,13 @@ fun MainNavigationScreen(
             }
 
             composable(BottomNavScreen.Download.route) {
-                VideoDownloadScreen { id ->
-                    Log.e("TAG", "VideoDownloadScreen:id $id")
-                    navController.navigate(
-                        "videoPlayer/${
-                            URLEncoder.encode(id, "UTF-8")
-                        }/${true}"
-                    )
+                VideoDownloadScreen(
+                    viewModel = videoDownloadViewModel,
+                    onMoreOptionClick = { _, video ->
+                        selectedVideo.value = video
+                        activeBottomSheet.value = BottomSheet.MODIFY_VIDEO
+                    }) { id ->
+                    navController.navigate("videoPlayer/${URLEncoder.encode(id, "UTF-8")}/${true}")
                 }
             }
 
@@ -124,7 +126,7 @@ fun MainNavigationScreen(
                     navController = navController,
                     videoUrl = videoUrl.toString(),
                 ) { videos ->
-                    downloadResolution.value = videos
+                    selectedVideo.value = videos
                     activeBottomSheet.value = BottomSheet.Download
                     coroutineScope.launch { downloadBottomSheetState.show() }
                 }
@@ -139,19 +141,16 @@ fun MainNavigationScreen(
             ) { backStackEntry ->
                 val videoId = backStackEntry.arguments?.getString("videoId")
                 val isDownloaded = backStackEntry.arguments?.getBoolean("isDownloaded")
-                Log.e("TAG", "MainNavigationScreen: uuid $videoId , $isDownloaded")
                 PlayVideoScreen(
                     navController = navController,
                     videoId = videoId.toString(),
                     isDownloaded = isDownloaded ?: false
                 ) { videos ->
-                    downloadResolution.value = videos
+                    selectedVideo.value = videos
                     activeBottomSheet.value = BottomSheet.Download
                     coroutineScope.launch { downloadBottomSheetState.show() }
                 }
             }
-
-
 
             composable(
                 route = "watch/{itemId}",
@@ -160,8 +159,7 @@ fun MainNavigationScreen(
                     navDeepLink { uriPattern = "https://youtu.be/{itemId}" },
                     navDeepLink { uriPattern = "https://www.youtube.com/watch?v={itemId}" }
                 )
-            ) { backStackEntry ->
-                val itemId = backStackEntry.arguments?.getString("itemId")
+            ) {
                 HomeScreen(
                     isSearchable = true
                 ) {
@@ -179,22 +177,32 @@ fun MainNavigationScreen(
         ) {
             when (activeBottomSheet.value) {
                 BottomSheet.Download -> {
-                    downloadResolution.value?.let {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            DownloadBottomSheet(
-                                modifier = modifier,
-                                video = it,
-                                onDismiss = {
-                                    coroutineScope.launch {
-                                        downloadBottomSheetState.hide()
-                                        activeBottomSheet.value = null
-                                    }
-                                }) {
-                                navController.navigate(BottomNavScreen.Download.route)
+                    DownloadBottomSheet(
+                        modifier = modifier,
+                        video = selectedVideo.value,
+                        onDismiss = {
+                            coroutineScope.launch {
+                                downloadBottomSheetState.hide()
+                                activeBottomSheet.value = null
                             }
-                        }
+                        }) {
+                        navController.navigate(BottomNavScreen.Download.route)
                     }
                 }
+
+                BottomSheet.MODIFY_VIDEO -> {
+                    VideoDownloadedBottomSheet(
+                        viewModel = videoDownloadViewModel,
+                        modifier = modifier,
+                        video = selectedVideo.value,
+                        onDismiss = {
+                            coroutineScope.launch {
+                                downloadBottomSheetState.hide()
+                                activeBottomSheet.value = null
+                            }
+                        })
+                }
+
                 else -> {}
             }
         }
@@ -206,10 +214,10 @@ fun NavHostController.isBottomBarScreen(): Boolean {
     val navBackStackEntry by this.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    return (currentRoute in listOf(
+    return currentRoute in listOf(
         BottomNavScreen.Home.route,
         BottomNavScreen.PlayList.route,
         BottomNavScreen.Download.route,
         BottomNavScreen.Setting.route,
-    ))
+    )
 }
