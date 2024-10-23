@@ -85,6 +85,10 @@ fun PlayVideoScreen(
     val fileSize = viewModel.size.collectAsState().value.first
     var isFullScreen by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
+    val isProgress = viewModel.progress.collectAsState().value
+    var isDownload by remember {
+        mutableStateOf(false)
+    }
 
     var previousFullScreenState by rememberSaveable { mutableStateOf(isFullScreen) }
 
@@ -116,7 +120,10 @@ fun PlayVideoScreen(
             Scaffold(floatingActionButton = {
                 if (!isFullScreen && !isDownloaded) {
                     FloatingActionButton(
-                        onClick = { onDownloadClicked(data) },
+                        onClick = {
+                            onDownloadClicked(data)
+                            isDownload = true
+                        },
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_file_download_icon),
@@ -125,10 +132,12 @@ fun PlayVideoScreen(
                     }
                 }
             }) { paddingValue ->
-                MainHomeScreen(video = data,
+                MainHomeScreen(
+                    video = data,
                     modifier = Modifier.padding(paddingValue),
                     size = fileSize,
                     viewModel = viewModel,
+                    isProgressShow = isProgress && isDownload,
                     isFullScreen = isFullScreen,
                     isDownloaded = isDownloaded,
                     onFullScreenChangeListener = { fullScreen ->
@@ -169,6 +178,7 @@ fun MainHomeScreen(
     isFullScreen: Boolean,
     isDownloaded: Boolean,
     onFullScreenChangeListener: (Boolean) -> Unit,
+    isProgressShow: Boolean,
 ) {
     LaunchedEffect(video.id) {
         if(video.resolutionDetails?.isEmpty() == true){

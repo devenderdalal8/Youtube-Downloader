@@ -3,12 +3,7 @@ package com.youtube.youtube_downloader.util
 import com.youtube.youtube_downloader.R
 
 enum class Screen {
-    HOME,
-    DOWNLOAD,
-    WATCHLIST,
-    CHANNELS,
-    PLAYLIST,
-    SETTING,
+    SHORTS,
     SPLASH
 }
 

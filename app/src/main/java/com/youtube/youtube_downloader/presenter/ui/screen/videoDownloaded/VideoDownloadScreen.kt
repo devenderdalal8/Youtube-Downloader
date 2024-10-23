@@ -64,7 +64,7 @@ fun VideoDownloadScreen(
     modifier: Modifier = Modifier,
     viewModel: VideoDownloadViewModel,
     onMoreOptionClick: (Int, Video) -> Unit,
-    onPlayVideoClickListener: (String) -> Unit,
+    onPlayVideoClickListener: (String, Boolean) -> Unit,
 ) {
     LaunchedEffect(Unit) {
         viewModel.getAllVideos()
@@ -86,7 +86,7 @@ fun VideoDownloadScreen(
                 },
                 viewModel = viewModel,
                 onPlayVideoClickListener = { id ->
-                    onPlayVideoClickListener(id)
+                    onPlayVideoClickListener(id, true)
                 }
             )
         }

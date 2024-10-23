@@ -3,7 +3,6 @@ package com.youtube.youtube_downloader.util
 import android.os.Build
 import androidx.annotation.RequiresApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import java.net.URL
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -101,6 +100,4 @@ infix fun <T> MutableStateFlow<T>.value(value: T) {
     this.value = value
 }
 
-infix fun <T> MutableStateFlow<T>.update(value: T) {
-    this.update { value }
-}
+fun String.isShortVideo(): Boolean = this.contains("youtube.com/shorts/", ignoreCase = true)

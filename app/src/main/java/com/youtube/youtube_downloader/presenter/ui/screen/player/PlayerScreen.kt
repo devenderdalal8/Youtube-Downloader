@@ -85,8 +85,10 @@ fun PlayerScreen(
 
     OnlineVideoPlayer(
         video = video,
-        modifier = modifier, viewModel = viewModel,
-        context = context, progressBarVisibility = progressBarVisibility,
+        modifier = modifier,
+        viewModel = viewModel,
+        context = context,
+        progressBarVisibility = progressBarVisibility,
         screenWidth = screenWidth,
         screenHeight = screenHeight
     ) { isFullScreen ->

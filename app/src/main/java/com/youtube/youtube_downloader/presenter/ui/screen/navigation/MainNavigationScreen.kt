@@ -18,7 +18,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -26,7 +25,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.navigation.navDeepLink
 import com.youtube.domain.model.Video
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.PlayListScreen
 import com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen.SettingScreen
@@ -59,8 +57,8 @@ fun MainNavigationScreen(
     LaunchedEffect(Unit) {
         if (intent.action == ACTION_SEND) {
             val sharedUrl = intent.getStringExtra(EXTRA_TEXT)
-            val encodedUrl = Uri.encode(sharedUrl)
-            navController.navigate("videoPlayer/$encodedUrl")
+            val url = Uri.encode(sharedUrl)
+            navController.navigate("videoPlayer/$url")
         }
     }
 
@@ -90,6 +88,7 @@ fun MainNavigationScreen(
                 HomeScreen(
                     isSearchable = true
                 ) { videoUrl ->
+                    // when i am searching video from home  screen
                     navController.navigate(
                         "videoPlayer/${
                             URLEncoder.encode(videoUrl, "UTF-8")
@@ -108,8 +107,11 @@ fun MainNavigationScreen(
                     onMoreOptionClick = { _, video ->
                         selectedVideo.value = video
                         activeBottomSheet.value = BottomSheet.MODIFY_VIDEO
-                    }) { id ->
-                    navController.navigate("videoPlayer/${URLEncoder.encode(id, "UTF-8")}/${true}")
+                    }) { id, isDownloaded ->
+                    // video is already downloaded and now we can play offline
+                    navController.navigate(
+                        "videoPlayer/${URLEncoder.encode(id, "UTF-8")}/${isDownloaded}"
+                    )
                 }
             }
 
@@ -152,20 +154,6 @@ fun MainNavigationScreen(
                 }
             }
 
-            composable(
-                route = "watch/{itemId}",
-                arguments = listOf(navArgument("itemId") { type = NavType.StringType }),
-                deepLinks = listOf(
-                    navDeepLink { uriPattern = "https://youtu.be/{itemId}" },
-                    navDeepLink { uriPattern = "https://www.youtube.com/watch?v={itemId}" }
-                )
-            ) {
-                HomeScreen(
-                    isSearchable = true
-                ) {
-
-                }
-            }
         }
     }
 

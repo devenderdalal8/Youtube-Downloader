@@ -12,6 +12,7 @@ import com.youtube.domain.usecase.GetVideoResolutionUseCase
 import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.domain.utils.Resource
 import com.youtube.youtube_downloader.util.getFileSize
+import com.youtube.youtube_downloader.util.value
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -34,6 +35,8 @@ class MainViewModel @Inject constructor(
 
     private val _size = MutableStateFlow(Pair(NOTHING, 0L))
     val size = _size.asStateFlow()
+    private val _progress = MutableStateFlow(false)
+    val progress = _progress.asStateFlow()
 
     private val _videoDetails = MutableStateFlow<UiState>(UiState.Loading)
     val videoDetails = _videoDetails.asStateFlow()
@@ -88,13 +91,16 @@ class MainViewModel @Inject constructor(
                             )
                         )
                     }
-
+                    is Resource.Loading -> {
+                        _progress value true
+                    }
                     else -> {}
                 }
             }
             val updatedVideo = currentVideo.copy(
                 resolutionDetails = details
             )
+            _progress value false
             _videoDetails.update { UiState.Success(updatedVideo) }
         }
     }
