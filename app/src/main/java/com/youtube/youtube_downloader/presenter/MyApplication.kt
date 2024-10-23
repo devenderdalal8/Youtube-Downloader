@@ -1,14 +1,23 @@
 package com.youtube.youtube_downloader.presenter
 
-import android.os.Build
-import androidx.annotation.OptIn
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.offline.DownloadService
+import android.util.Log
+import androidx.work.Configuration
 import com.chaquo.python.android.PyApplication
-import com.youtube.data.service.VideoDownloadService
+import com.youtube.data.service.workManager.VideoWorkerFactory
+import com.youtube.domain.repository.VideoLocalDataRepository
 import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
 @HiltAndroidApp
-class MyApplication() : PyApplication() {
+internal class MyApplication : PyApplication(), Configuration.Provider {
+
+    @Inject
+    lateinit var localDataRepository: VideoLocalDataRepository
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setMinimumLoggingLevel(Log.DEBUG)
+            .setWorkerFactory(VideoWorkerFactory(localDataRepository))
+            .build()
 
 }

@@ -4,25 +4,25 @@ import android.util.Log
 import com.chaquo.python.PyObject
 import com.youtube.domain.repository.PythonScriptRepository
 import com.youtube.domain.utils.Resource
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class PythonScriptRepositoryImpl @Inject constructor(
     private val pythonService: PyObject,
-
 ) : PythonScriptRepository {
     override suspend fun downloadAsync(functionName: String, vararg args: Any): Resource<Any> {
-        return withContext(Dispatchers.IO) {
+        val result = withContext(Dispatchers.IO) {
             try {
-                val result = callPythonFunction(functionName, *args)
-                Resource.Success(result)
+                val data = callPythonFunction(functionName, *args)
+                Log.e("TAG", "downloadAsync: $data", )
+                Resource.Success(data)
             } catch (ex: Exception) {
                 Log.e("TAG", "downloadAsync: ${ex.message}", )
                 Resource.Error(ex.message.toString())
             }
         }
+        return result
     }
 
     private suspend fun callPythonFunction(functionName: String, vararg args: Any): Any {

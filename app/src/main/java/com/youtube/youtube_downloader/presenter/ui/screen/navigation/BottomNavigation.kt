@@ -53,7 +53,6 @@ fun CustomBottomBar(navController: NavController) {
                     disabledTextColor = Color.Transparent
                 )
             )
-
             NavigationBarItem(
                 icon = {
                     Icon(
@@ -66,26 +65,6 @@ fun CustomBottomBar(navController: NavController) {
                     navController.bottomNavBar(BottomNavScreen.PlayList.route)
                 },
                 colors = NavigationBarItemColors(
-                    selectedIconColor = Color.White,
-                    selectedTextColor = Color.Transparent,
-                    selectedIndicatorColor = Color.Transparent,
-                    unselectedIconColor = Color.White.copy(alpha = 0.5f),
-                    unselectedTextColor = Color.Transparent,
-                    disabledIconColor = Color.Transparent,
-                    disabledTextColor = Color.Transparent
-                )
-            )
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        painter = painterResource(id = BottomNavScreen.Search.icon),
-                        contentDescription = BottomNavScreen.Search.title
-                    )
-                },
-                selected = currentDestination?.isSelected(BottomNavScreen.Search.route) ?: false,
-                onClick = {
-                    navController.bottomNavBar(BottomNavScreen.Search.route)
-                }, colors = NavigationBarItemColors(
                     selectedIconColor = Color.White,
                     selectedTextColor = Color.Transparent,
                     selectedIndicatorColor = Color.Transparent,

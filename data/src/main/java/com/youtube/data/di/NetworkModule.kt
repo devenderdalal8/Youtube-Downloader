@@ -1,5 +1,6 @@
 package com.youtube.data.di
 
+import android.app.NotificationManager
 import android.content.Context
 import dagger.Module
 import dagger.Provides
@@ -23,5 +24,11 @@ class NetworkModule {
     @Singleton
     fun provideApplicationContext(@ApplicationContext context: Context): Context {
         return context
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationManager(@ApplicationContext context: Context): NotificationManager {
+        return context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     }
 }

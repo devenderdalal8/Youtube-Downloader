@@ -1,13 +1,15 @@
-package com.youtube.youtube_downloader.presenter.ui.screen.bottomNavScreen
+package com.youtube.youtube_downloader.presenter.ui.screen.playVideo
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
 import android.os.Build
+import android.view.WindowManager
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,26 +23,23 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -48,66 +47,104 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.youtube.domain.model.Video
+import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.youtube_downloader.R
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.MainViewModel
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.UiState
 import com.youtube.youtube_downloader.presenter.ui.screen.player.PlayerScreen
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeTypography
 import com.youtube.youtube_downloader.presenter.ui.theme.font_12
-import com.youtube.youtube_downloader.presenter.ui.theme.size_16
 import com.youtube.youtube_downloader.presenter.ui.theme.size_8
 import com.youtube.youtube_downloader.util.Constant
 import com.youtube.youtube_downloader.util.convertIntoNumber
 import com.youtube.youtube_downloader.util.getTimeDifference
 
 @Composable
-fun HomeScreen(
-    videoUrl: String = "",
-    viewModel: MainViewModel,
-    isSearchable: Boolean,
-    onFullScreenChangeListener: (Boolean) -> Unit,
-    onDownloadClicked: (Video) -> Unit,
+fun PlayVideoScreen(
+    navController: NavController,
+    videoUrl: String = NOTHING,
+    videoId: String = NOTHING,
+    isDownloaded: Boolean = false,
+    viewModel: MainViewModel = hiltViewModel(),
+    onDownloadClicked: (Video) -> Unit
 ) {
     LaunchedEffect(key1 = videoUrl) {
-        viewModel.getVideoDetails(videoUrl)
+        if (!isDownloaded) {
+            viewModel.getVideoDetails(videoUrl)
+        } else {
+            viewModel.getDownloadedVideo(videoId)
+        }
     }
     val uiState = viewModel.videoDetails.collectAsState().value
     val fileSize = viewModel.size.collectAsState().value.first
-    val query = remember { mutableStateOf("") }
-    val isFullScreen = remember {
+    var isFullScreen by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
+    val isProgress = viewModel.progress.collectAsState().value
+    var isDownload by remember {
         mutableStateOf(false)
     }
 
-    val context = LocalContext.current
+    var previousFullScreenState by rememberSaveable { mutableStateOf(isFullScreen) }
+
+    LaunchedEffect(isFullScreen) {
+        if (isFullScreen != previousFullScreenState) {
+            previousFullScreenState = isFullScreen
+
+            val activity = context as? Activity
+            val window = activity?.window
+            val decorView = window?.decorView
+            val windowInsetsController =
+                window?.let { WindowInsetsControllerCompat(it, decorView!!) }
+
+            if (isFullScreen) {
+                window?.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                windowInsetsController?.hide(WindowInsetsCompat.Type.systemBars())
+                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            } else {
+                window?.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                windowInsetsController?.show(WindowInsetsCompat.Type.systemBars())
+                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+        }
+    }
+
     when (uiState) {
         is UiState.Success -> {
             val data = uiState.data as Video
             Scaffold(floatingActionButton = {
-                if (data.videoUrl != null && !isFullScreen.value) {
+                if (!isFullScreen && !isDownloaded) {
                     FloatingActionButton(
-                        onClick = { onDownloadClicked(data) },
+                        onClick = {
+                            onDownloadClicked(data)
+                            isDownload = true
+                        },
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_file_download_icon),
-                            contentDescription = "",
+                            contentDescription = NOTHING,
                         )
                     }
                 }
             }) { paddingValue ->
-                MainHomeScreen(video = data,
+                MainHomeScreen(
+                    video = data,
                     modifier = Modifier.padding(paddingValue),
                     size = fileSize,
-                    isSearchable = isSearchable,
-                    isFullScreen = isFullScreen.value,
-                    query = query.value,
-                    onValueListener = { search ->
-                        query.value = search
-                    }) { fullScreen ->
-                    onFullScreenChangeListener(fullScreen)
-                    isFullScreen.value = fullScreen
-                }
+                    viewModel = viewModel,
+                    isProgressShow = isProgress && isDownload,
+                    isFullScreen = isFullScreen,
+                    isDownloaded = isDownloaded,
+                    onFullScreenChangeListener = { fullScreen ->
+                        if (fullScreen != isFullScreen) {
+                            isFullScreen = fullScreen
+                        }
+                    })
             }
         }
 
@@ -120,6 +157,14 @@ fun HomeScreen(
                 CircularProgressIndicator()
             }
         }
+
+        is UiState.Nothing -> {}
+    }
+
+    BackHandler(isFullScreen) {
+        isFullScreen = false
+        (context as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        navController.popBackStack()
     }
 }
 
@@ -128,42 +173,38 @@ fun HomeScreen(
 fun MainHomeScreen(
     video: Video,
     modifier: Modifier = Modifier,
+    viewModel: MainViewModel,
     size: String,
     isFullScreen: Boolean,
-    onValueListener: (String) -> Unit,
-    query: String,
-    isSearchable: Boolean,
+    isDownloaded: Boolean,
     onFullScreenChangeListener: (Boolean) -> Unit,
+    isProgressShow: Boolean,
 ) {
+    LaunchedEffect(video.id) {
+        if(video.resolutionDetails?.isEmpty() == true){
+            viewModel.getVideoDetails(video.resolution, video.baseUrl)
+        }
+    }
+
     Box(
         modifier = modifier.fillMaxSize()
     ) {
         Column(modifier = modifier) {
-            if (isFullScreen) {
-                DefaultSearchBar(
-                    modifier = modifier,
-                    query = query,
-                    onValueListener = onValueListener,
-                    isSearchable = isSearchable
-                )
-            }
-            PlayerScreen(video = video, isDownloaded = false) { fullScreen ->
+            PlayerScreen(video = video, isDownloaded = isDownloaded) { fullScreen ->
                 onFullScreenChangeListener(fullScreen)
             }
-            if (isFullScreen) {
+            if (!isFullScreen) {
                 Spacer(modifier = modifier.padding(size_8))
                 Column(modifier = modifier.verticalScroll(rememberScrollState())) {
                     Title(
-                        title = video.title.toString(),
-                        thumbnailUrl = video.thumbnailUrl.toString()
+                        title = video.title.toString(), thumbnailUrl = video.thumbnailUrl.toString()
                     )
                     Spacer(modifier = modifier.padding(size_8))
                     HorizontalDivider(thickness = 1.dp)
                     Spacer(modifier = modifier.padding(size_8))
                     ShowVideoDetails(video = video, size = size)
                     HorizontalDivider(
-                        thickness = 1.dp,
-                        modifier = modifier.padding(vertical = size_8)
+                        thickness = 1.dp, modifier = modifier.padding(vertical = size_8)
                     )
                     VideoDescription(description = video.description, modifier = modifier)
                 }
@@ -171,6 +212,7 @@ fun MainHomeScreen(
         }
     }
 }
+
 
 @Composable
 fun VideoDescription(description: String?, modifier: Modifier) {
@@ -193,7 +235,7 @@ fun VideoDescription(description: String?, modifier: Modifier) {
                 )
                 Icon(
                     imageVector = if (!expanded.value) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                    contentDescription = "",
+                    contentDescription = NOTHING,
                     modifier = modifier.padding(vertical = size_8)
                 )
             }
@@ -210,64 +252,13 @@ fun VideoDescription(description: String?, modifier: Modifier) {
 }
 
 @Composable
-fun DefaultSearchBar(
-    modifier: Modifier,
-    query: String,
-    onValueListener: (String) -> Unit,
-    isSearchable: Boolean
-) {
-    if(isSearchable){
-        TextField(
-            value = query,
-            onValueChange = { onValueListener(it) },
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(size_16)
-                .background(
-                    Color.Transparent
-                ),
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "search icon",
-                    modifier = modifier.padding(start = size_16, end = size_8)
-                )
-            },
-            shape = RoundedCornerShape(size_8),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-            )
-        )
-    }
-}
-
-@Composable
-fun BoxScope.DownloadButton(video: Video, onButtonClicked: () -> Unit) {
-    OutlinedButton(
-        onClick = { onButtonClicked() },
-        modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = size_8)
-    ) {
-        Text(
-            text = Constant.DOWNLOAD,
-            fontSize = 18.sp,
-            fontFamily = FontFamily.SansSerif,
-        )
-    }
-}
-
-@Composable
 fun ShowVideoDetails(video: Video, size: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
         if (video.likes != null) {
             VideoDetails(video.likes.toString(), "Likes")
         }
-        if (video.views != null) {
-            VideoDetails(video.views.convertIntoNumber(), "Views")
+        if (video.views.isNotEmpty()) {
+            VideoDetails(video.views.toLong().convertIntoNumber(), "Views")
         }
         if (size.isNotEmpty()) {
             VideoDetails(size, "Size")

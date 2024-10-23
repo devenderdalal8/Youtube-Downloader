@@ -1,189 +1,155 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.videoDownloaded
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.os.Build
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.youtube.data.service.VideoDownloadService
-import com.youtube.data.util.getFileSize
 import com.youtube.domain.model.DownloadState
-import com.youtube.domain.model.DownloadState.COMPLETED
-import com.youtube.domain.model.DownloadState.FAILED
-import com.youtube.domain.model.entity.LocalVideo
+import com.youtube.domain.model.Video
+import com.youtube.domain.repository.DownloadWorkerRepository
 import com.youtube.domain.repository.VideoLocalDataRepository
-import com.youtube.domain.utils.Constant.BASE_URL
-import com.youtube.domain.utils.Constant.DOWNLOADED_BYTES
-import com.youtube.domain.utils.Constant.DOWNLOAD_COMPLETE
-import com.youtube.domain.utils.Constant.DOWNLOAD_FAILED
-import com.youtube.domain.utils.Constant.FILE_SIZE
-import com.youtube.domain.utils.Constant.LAST_PROGRESS
-import com.youtube.domain.utils.Constant.PROGRESS_DATA
+import com.youtube.domain.usecase.GetVideoResolutionUseCase
+import com.youtube.domain.utils.Resource
 import com.youtube.youtube_downloader.presenter.ui.screen.mainActivity.UiState
-import com.youtube.youtube_downloader.presenter.ui.screen.navigation.pauseDownloadService
+import com.youtube.youtube_downloader.util.isUrlExpired
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class VideoDownloadViewModel @Inject constructor(
     private val localDataRepository: VideoLocalDataRepository,
+    private val getVideoResolutionUseCase: GetVideoResolutionUseCase,
+    private val downloadWorkerRepository: DownloadWorkerRepository,
 ) : ViewModel() {
-
-    private val _progress = MutableStateFlow(Triple(0F, 0L, ""))
-    val progress = _progress.asStateFlow()
 
     private val _videos = MutableStateFlow<UiState>(UiState.Loading)
     val videos = _videos.asStateFlow()
-    private var allVideos: MutableList<LocalVideo> = mutableListOf()
+
+    private var allVideos: MutableList<Video> = mutableListOf()
+
+    private val _videoUpdates = MutableSharedFlow<Video>(replay = 1)
+    val videoUpdates = _videoUpdates
+
     init {
         getAllVideos()
+        initialization()
     }
 
-    private fun getAllVideos() {
+    private fun initialization() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _videoUpdates.collectLatest { video ->
+                allVideos.replaceAll { if (it.id == video.id) video else it }
+                _videos.update { UiState.Success(allVideos.toList()) }
+            }
+        }
+    }
+
+    fun getAllVideos() {
         viewModelScope.launch {
             try {
                 localDataRepository.getVideos().collect { video ->
                     allVideos.clear()
                     allVideos.addAll(video)
                     _videos.value = UiState.Success(video)
+                    Log.i("TAG", "getAllVideos: $video")
                 }
             } catch (e: Exception) {
-                _videos.value = UiState.Error(e.message.toString())
+                _videos.update { UiState.Error(e.message.toString()) }
             }
         }
     }
 
-    fun resumeDownload(
-        context: Context,
-        url: String,
-        downloadedBytes: Long = 0L,
-        fileName: String? = "",
-        baseUrl: String,
-    ) {
+    fun resumeDownload(video: Video) {
         viewModelScope.launch(Dispatchers.IO) {
-            val video = async { localDataRepository.videoByBaseUrl(baseUrl) }.await()
-
-            val intent = Intent(context, VideoDownloadService::class.java).apply {
-                putExtra("url", url)
-                putExtra("baseUrl", baseUrl)
-                putExtra("fileName", fileName)
-                putExtra("downloadedBytes", downloadedBytes)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
+            downloadWorkerRepository.pauseDownload()
+            pauseAllDownloads()
+            if (video.selectedVideoUrl.toString().isUrlExpired()) {
+                updateExpireUrl(
+                    video.baseUrl.toString(),
+                    video.selectedResolution.toString(),
+                    id = video.id.toString()
+                )
             } else {
-                context.startService(intent)
+                val videoById = async { localDataRepository.videoById(video.id.toString()) }.await()
+                val workId = downloadWorkerRepository.startDownload(video = videoById)
+                val updatedVideo = video.copy(workId = workId)
+                updateVideo(
+                    video = videoById,
+                    newState = DownloadState.DOWNLOADING,
+                    url = videoById.selectedVideoUrl.toString(),
+                )
+                localDataRepository.update(updatedVideo)
             }
-            updateLocalVideo(video, DownloadState.DOWNLOADING)
         }
     }
 
-    private fun updateLocalVideo(video: LocalVideo, newState: DownloadState) {
+    private fun pauseAllDownloads() {
+        viewModelScope.launch(Dispatchers.IO) {
+            allVideos.forEach { video ->
+                if (video.state == DownloadState.DOWNLOADING) {
+                    pauseVideoService(video)
+                }
+            }
+        }
+    }
+
+    private fun updateExpireUrl(baseUrl: String, resolution: String, id: String) {
+        viewModelScope.launch {
+            val url = async {
+                this@VideoDownloadViewModel.getVideoResolutionUseCase(baseUrl, resolution)
+            }.await()
+            when (url) {
+                is Resource.Error -> {
+                    Log.e("TAG", "updateExpireUrl: ${url.message.toString()}")
+                }
+
+                is Resource.Loading -> {}
+                is Resource.Success -> {
+                    val video = async { localDataRepository.videoById(id) }.await()
+                    val workId = downloadWorkerRepository.startDownload(video = video)
+                    val updatedVideo = video.copy(workId = workId)
+                    updateVideo(
+                        video = updatedVideo,
+                        newState = DownloadState.DOWNLOADING,
+                        url = url.data.toString()
+                    )
+                }
+            }
+        }
+    }
+
+    private fun updateVideo(video: Video, newState: DownloadState, url: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val updatedVideo = video.copy(
-                downloadProgress = video.downloadProgress.copy(
-                    state = newState
-                )
+                state = newState,
+                selectedVideoUrl = url
             )
             localDataRepository.update(updatedVideo)
-            val index = allVideos.indexOfFirst { local -> local.baseUrl == video.baseUrl }
-            if (index >= 0) {
-                allVideos[index] = updatedVideo
-                _videos.value = UiState.Success(allVideos)
-            }
+            allVideos.replaceAll { if (it.id == updatedVideo.id) updatedVideo else it }
+            _videos.update { UiState.Success(allVideos.toList()) }
         }
     }
 
-    fun pauseVideoService(context: Context, baseUrl: String) {
+    fun pauseVideoService(video: Video) {
         viewModelScope.launch(Dispatchers.IO) {
-            val video = async { localDataRepository.videoByBaseUrl(baseUrl) }.await()
-            updateLocalVideo(video, DownloadState.PAUSED)
-            context.pauseDownloadService()
+            updateVideo(video, DownloadState.PAUSED, video.selectedVideoUrl.toString())
+            downloadWorkerRepository.pauseDownload()
         }
     }
 
-    fun deleteVideo(position: Int) {
+    fun deleteVideo(video: Video) {
         viewModelScope.launch {
-            val videoToDelete = allVideos[position]
-            localDataRepository.delete(video = videoToDelete)
-            allVideos.removeAt(position)
-            _videos.value = UiState.Success(allVideos.toList())
-        }
-    }
-
-    val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent) {
-            val baseUrl = intent.getStringExtra(BASE_URL) ?: return
-            val videoDeferred = viewModelScope.async(Dispatchers.IO) {
-                localDataRepository.videoByBaseUrl(baseUrl)
-            }
-
-            when (intent.action) {
-                PROGRESS_DATA -> {
-                    val progress = intent.getIntExtra(LAST_PROGRESS, 0)
-                    val downloadByte = intent.getLongExtra(DOWNLOADED_BYTES, 0L)
-                    val fileSize = intent.getStringExtra(FILE_SIZE)
-                    _progress.value =
-                        Triple(progress.toFloat(), downloadByte, fileSize.toString())
-                    viewModelScope.launch(Dispatchers.IO) {
-                        updateProgress(
-                            video = videoDeferred.await(),
-                            progress = progress,
-                            downloadByte = downloadByte
-                        )
-                    }
-                }
-
-                DOWNLOAD_COMPLETE -> {
-                    viewModelScope.launch(Dispatchers.IO) {
-                        val video = videoDeferred.await()
-                        val updatedVideo = video.copy(
-                            downloadProgress = video.downloadProgress.copy(
-                                state = COMPLETED
-                            )
-                        )
-                        localDataRepository.update(updatedVideo)
-                        getAllVideos()
-                    }
-                }
-
-                DOWNLOAD_FAILED -> {
-                    viewModelScope.launch(Dispatchers.IO) {
-                        val video = videoDeferred.await()
-                        val updatedVideo = video.copy(
-                            downloadProgress = video.downloadProgress.copy(
-                                state = FAILED
-                            )
-                        )
-                        localDataRepository.update(updatedVideo)
-                        getAllVideos()
-                    }
-                }
-            }
-        }
-    }
-
-    private fun updateProgress(
-        progress: Int,
-        downloadByte: Long,
-        video: LocalVideo
-    ) {
-        viewModelScope.launch(Dispatchers.IO) {
-            video.copy(
-                downloadProgress = video.downloadProgress.copy(
-                    bytesDownloaded = downloadByte,
-                    progress = progress,
-                    megaBytesDownloaded = downloadByte.getFileSize()
-                )
-            ).also { updatedVideo ->
-                localDataRepository.update(video = updatedVideo)
-            }
+            localDataRepository.delete(video = video)
+            val updatedVideos = allVideos.filterNot { it == video }
+            _videos.update { UiState.Success(updatedVideos) }
         }
     }
 }

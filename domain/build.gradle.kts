@@ -40,6 +40,8 @@ dependencies {
     implementation (libs.androidx.hilt.navigation.compose)
     ksp (libs.androidx.hilt.compiler)
     implementation(libs.hilt.android)
+    implementation (libs.androidx.work.runtime.ktx)
+    implementation (libs.androidx.hilt.work)
     implementation(libs.retrofit)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.room.ktx)

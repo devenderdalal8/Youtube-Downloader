@@ -71,6 +71,13 @@ dependencies {
     implementation(libs.lottie.compose)
     // hilt
     implementation (libs.androidx.hilt.navigation.compose)
+    //workManager
+    implementation (libs.androidx.work.runtime.ktx)
+    implementation (libs.androidx.hilt.work)
+    //Basic
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.activity)
     ksp (libs.androidx.hilt.compiler)
     implementation(libs.hilt.android)
     implementation(libs.converter.gson)

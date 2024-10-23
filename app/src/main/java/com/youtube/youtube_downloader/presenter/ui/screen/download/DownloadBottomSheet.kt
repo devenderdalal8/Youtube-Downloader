@@ -23,11 +23,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +44,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.youtube.domain.model.Video
+import com.youtube.domain.model.VideoDetails
+import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.youtube_downloader.R
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeTypography
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_primary
@@ -64,8 +64,8 @@ import com.youtube.youtube_downloader.presenter.ui.theme.size_64
 import com.youtube.youtube_downloader.presenter.ui.theme.size_8
 import com.youtube.youtube_downloader.presenter.ui.theme.size_96
 import com.youtube.youtube_downloader.util.Constant
-import java.util.UUID
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DownloadBottomSheet(
     modifier: Modifier = Modifier,
@@ -74,53 +74,36 @@ fun DownloadBottomSheet(
     viewModel: DownloadViewModel = hiltViewModel(),
     onButtonClickListener: () -> Unit
 ) {
-    val context = LocalContext.current
-    LaunchedEffect(key1 = video.videoId) {
-        viewModel.getVideoDetails(video.resolution, video.baseUrl)
-    }
-    when (val uiState = viewModel.downloadVideoUiState.collectAsState().value) {
-        is DownloadVideoUiState.Loading -> {
-            Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
 
-        is DownloadVideoUiState.Success -> {
-            val data = uiState.data
-            MainDownloadBottomSheetScreen(
-                modifier = modifier,
-                data = data,
-                video = video
-            ) { url ->
-                if (!viewModel.isVideoAvailable(video.baseUrl.toString())) {
-                    val id = UUID.randomUUID()
-                    viewModel.startDownload(
-                        context = context,
-                        baseUrl = video.baseUrl.toString(),
-                        fileName = video.title,
-                        url = url,
-                    )
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        viewModel.storeVideoLocally(video, id = id)
-                    }
-                }
-                onButtonClickListener()
-                onDismiss()
-            }
+    MainDownloadBottomSheetScreen(
+        modifier = modifier, data = video.resolutionDetails.orEmpty(), video = video
+    ) { url, resolution ->
+        if (!viewModel.isVideoAvailable(video.baseUrl.toString())) {
+            val downloadVideo = video.copy(
+                selectedResolution = resolution, selectedVideoUrl = url
+            )
+            viewModel.storeVideoLocally(downloadVideo)
+            viewModel.startDownload(video = downloadVideo)
         }
+        onButtonClickListener()
+        onDismiss()
     }
 }
+
 
 @Composable
 fun MainDownloadBottomSheetScreen(
     modifier: Modifier = Modifier,
     data: List<VideoDetails>,
     video: Video,
-    onButtonClickListener: (String) -> Unit
+    onButtonClickListener: (String, String) -> Unit
 ) {
     val context = LocalContext.current
     val videoUrl = remember {
-        mutableStateOf("")
+        mutableStateOf(NOTHING)
+    }
+    val videoResolution = remember {
+        mutableStateOf(NOTHING)
     }
     Box(
         modifier = modifier, contentAlignment = Alignment.TopCenter
@@ -132,11 +115,15 @@ fun MainDownloadBottomSheetScreen(
             Spacer(modifier = modifier.padding(size_8))
             ShowDownloadText(modifier = modifier)
             Spacer(modifier = modifier.padding(size_8))
-            VideoQualities(modifier = modifier, resolutions = data) { url ->
+            VideoQualities(modifier = modifier, resolutions = data) { url, resolution ->
                 videoUrl.value = url
+                videoResolution.value = resolution
             }
-            DownloadButtonView(modifier = modifier,
-                onButtonClickListener = { onButtonClickListener(videoUrl.value) })
+            DownloadButtonView(modifier = modifier, onButtonClickListener = {
+                onButtonClickListener(
+                    videoUrl.value, videoResolution.value
+                )
+            })
             Mp3DownloadButtonView(modifier = modifier, onButtonClickListener = {})
         }
     }
@@ -191,7 +178,7 @@ fun DownloadButtonView(modifier: Modifier, onButtonClickListener: () -> Unit) {
 
 @Composable
 fun VideoQualities(
-    modifier: Modifier, resolutions: List<VideoDetails>, onClickListener: (String) -> Unit
+    modifier: Modifier, resolutions: List<VideoDetails>, onClickListener: (String, String) -> Unit
 ) {
     val isSelected = remember {
         mutableIntStateOf(-1)
@@ -200,14 +187,11 @@ fun VideoQualities(
         columns = GridCells.Adaptive(minSize = size_96),
         modifier = modifier.padding(horizontal = size_16)
     ) {
-        itemsIndexed(resolutions) { index, resolution ->
-            ResolutionView(
-                resolution,
-                isSelected = isSelected.intValue == index,
-                onClickListener = {
-                    isSelected.intValue = index
-                    onClickListener(resolution.url.toString())
-                })
+        itemsIndexed(resolutions) { index, video ->
+            ResolutionView(video, isSelected = isSelected.intValue == index, onClickListener = {
+                isSelected.intValue = index
+                onClickListener(video.url.toString(), video.resolution.toString())
+            })
         }
     }
 }

@@ -1,8 +1,22 @@
 import json
 import os
 import re
+import time
 import requests
 from pytubefix import YouTube, Playlist, Channel
+from pytubefix import Search
+
+class RateLimiter:
+    def __init__(self, rate_per_second):
+        self.interval = 1.0 / rate_per_second
+        self.last_called = time.perf_counter()
+
+    def wait(self):
+        now = time.perf_counter()
+        elapsed = now - self.last_called
+        if elapsed < self.interval:
+            time.sleep(self.interval - elapsed)
+        self.last_called = time.perf_counter()
 
 
 # YouTubeDownloader for video
@@ -10,8 +24,10 @@ class YouTubeDownloader:
     def __init__(self, url):
         self.url = url
         self.yt = YouTube(url)
+        self.rate_limiter = RateLimiter(rate_per_second=1)
 
     def get_available_resolutions(self):
+        self.rate_limiter.wait()
         streams = self.yt.streams.filter()
         available_resolutions = {stream.resolution for stream in streams if
                                  stream.resolution is not None}
@@ -19,6 +35,7 @@ class YouTubeDownloader:
 
     def video_details(self):
         try:
+            self.rate_limiter.wait()
             details = Video(
                 title=self.yt.title,
                 description=self.yt.description,
@@ -40,6 +57,7 @@ class YouTubeDownloader:
             return json.dumps({'error': str(e)}, indent=4)
 
     def get_video_url_by_resolution(self, target_resolution):
+        self.rate_limiter.wait()
         try:
             streams = self.yt.streams.filter()
             available_resolutions = {stream.resolution for stream in streams}
@@ -55,6 +73,7 @@ class YouTubeDownloader:
             return f"Error: {str(e)}"
 
     def download_with_progress(self, url, output_path, progress_callback=None):
+        self.rate_limiter.wait()
         response = requests.get(url, stream=True)
         total_size = int(response.headers.get('content-length', 0))
         with open(output_path, 'wb') as file:
@@ -65,6 +84,7 @@ class YouTubeDownloader:
 
     def download_highest_resolution(self):
         try:
+            self.rate_limiter.wait()
             ys = self.yt.streams.get_highest_resolution()
             safe_title = self.sanitize_filename(self.yt.title)
             download_path = os.path.join("/storage/emulated/0/Download/", f"{safe_title}.mp4")
@@ -75,6 +95,7 @@ class YouTubeDownloader:
 
     def download_audio(self, mp3=True):
         try:
+            self.rate_limiter.wait()
             ys = self.yt.streams.get_audio_only()
             safe_title = self.sanitize_filename(self.yt.title)
             download_path = os.path.join("/storage/emulated/0/Download/", f"{safe_title}.mp3")
@@ -99,6 +120,7 @@ class YouTubeDownloader:
 class PlaylistDownloader:
     def __init__(self, url):
         self.playlist = Playlist(url)
+        self.rate_limiter = RateLimiter(rate_per_second=1)
 
     def download_all_videos_audio(self, mp3=True):
         results = []
@@ -113,6 +135,7 @@ class PlaylistDownloader:
 class ChannelDownloader:
     def __init__(self, url):
         self.channel = Channel(url)
+        self.rate_limiter = RateLimiter(rate_per_second=1)
 
     def get_channel_name(self):
         return self.channel.channel_name
@@ -151,6 +174,52 @@ class Video:
     def to_json(self):
         return json.dumps(self.__dict__)
 
+class SearchVideo:
+    def __init__(self, title="", thumbnail_url="", base_url="", video_id="", video_url="",
+                 duration="", views="", upload_date=None):
+        self.title = title
+        self.thumbnail_url = thumbnail_url
+        self.base_url = base_url
+        self.video_id = video_id
+        self.video_url = video_url
+        self.duration = duration
+        self.views = views
+        self.upload_date = upload_date
+
+    def to_json(self):
+        return json.dumps(self.__dict__, indent=4)
+
+class YouTubeVideoFetcher:
+    def __init__(self, query):
+        self.query = query
+        self.rate_limiter = RateLimiter(rate_per_second=1)
+
+    def search_videos(self, max_results=10):
+        try:
+            self.rate_limiter.wait()
+            search = Search(self.query)
+            results = search.videos
+            videos = []
+            for result in results[:max_results]:
+                video = SearchVideo(
+                    title=result.title,
+                    thumbnail_url=result.thumbnail_url,
+                    video_id=result.video_id,
+                    video_url=result.watch_url,
+                    duration=result.length,
+                    views=result.views,
+                    upload_date=str(result.publish_date.isoformat()) if result.publish_date else None  # Handle publish date
+                )
+                videos.append(video.__dict__)
+
+            return json.dumps({
+                "videos": videos,
+                "total": len(results)
+            }, indent=4)
+
+        except Exception as e:
+            return json.dumps({'error': str(e)}, indent=4)
+
 
 # Callable functions
 def download_video(url):
@@ -171,16 +240,17 @@ def download_audio(url, mp3=True):
     downloader = YouTubeDownloader(url)
     return downloader.download_audio(mp3=mp3)
 
-
 def download_subtitles(url, language_code='en', filename='captions.txt'):
     downloader = YouTubeDownloader(url)
     return downloader.download_subtitles(language_code, filename)
-
 
 def download_playlist(url, mp3=True):
     downloader = PlaylistDownloader(url)
     return downloader.download_all_videos_audio(mp3=mp3)
 
+def search_video(query):
+    url_details = YouTubeVideoFetcher(query)
+    return url_details.search_videos(max_results=3)
 
 def download_channel(url):
     downloader = ChannelDownloader(url)

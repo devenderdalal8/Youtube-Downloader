@@ -6,25 +6,29 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.youtube.domain.model.entity.LocalVideo
+import com.youtube.domain.model.Video
+import java.util.UUID
 
 @Dao
 interface VideoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(video: LocalVideo)
+    suspend fun insert(video: Video)
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun update(video: LocalVideo)
+    suspend fun update(video: Video)
 
     @Delete
-    suspend fun delete(video: LocalVideo)
+    suspend fun delete(video: Video)
 
     @Query("SELECT * FROM video_table ")
-    suspend fun getVideos(): List<LocalVideo>
+    suspend fun getVideos(): List<Video>
 
-    @Query("SELECT COUNT(*) FROM video_table WHERE baseUrl = :baseUrl")
+    @Query("SELECT COUNT(*) FROM video_table WHERE baseUrl = :baseUrl LIMIT 1")
     suspend fun isVideoAvailable(baseUrl: String): Int
 
     @Query("SELECT * FROM video_table WHERE baseUrl = :baseUrl LIMIT 1")
-    suspend fun videoById(baseUrl: String): LocalVideo
+    suspend fun videoByBaseUrl(baseUrl: String): Video
+
+    @Query("SELECT * FROM video_table WHERE id = :id LIMIT 1")
+    suspend fun videoById(id: UUID): Video
 }
