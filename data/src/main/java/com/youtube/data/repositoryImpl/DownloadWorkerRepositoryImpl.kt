@@ -10,7 +10,6 @@ import com.youtube.domain.repository.DownloadWorkerRepository
 import com.youtube.domain.utils.Constant.BASE_URL
 import com.youtube.domain.utils.Constant.START_BYTE
 import com.youtube.domain.utils.Constant.TITLE
-import com.youtube.domain.utils.Constant.URI
 import com.youtube.domain.utils.Constant.VIDEO_ID
 import com.youtube.domain.utils.Constant.VIDEO_NOTIFICATION_ID
 import com.youtube.domain.utils.Constant.VIDEO_URL

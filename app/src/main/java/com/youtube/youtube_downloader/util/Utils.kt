@@ -1,30 +1,12 @@
 package com.youtube.youtube_downloader.util
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.net.URL
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.time.OffsetDateTime
-import java.time.temporal.ChronoUnit
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-
-@RequiresApi(Build.VERSION_CODES.O)
-fun String.convertDateToYearsAndDays(): String {
-    val offsetDateTime = OffsetDateTime.parse(this)
-
-    val currentDateTime = OffsetDateTime.now()
-    val years = ChronoUnit.YEARS.between(offsetDateTime, currentDateTime)
-    val days = ChronoUnit.DAYS.between(offsetDateTime.plusYears(years), currentDateTime)
-    return if (years > 0) {
-        "$years years"
-    } else {
-        "$days days"
-    }
-}
 
 fun Long.getFileSize(): String {
     val units = arrayOf("B", "KB", "MB", "GB", "TB")
@@ -100,4 +82,3 @@ infix fun <T> MutableStateFlow<T>.value(value: T) {
     this.value = value
 }
 
-fun String.isShortVideo(): Boolean = this.contains("youtube.com/shorts/", ignoreCase = true)

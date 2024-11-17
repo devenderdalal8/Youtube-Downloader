@@ -1,7 +1,5 @@
 package com.youtube.domain.model
 
-import android.net.Uri
-
 data class DownloadProgress(
     var megaBytesDownloaded: String = "0",
     var progress: Int = 0,
