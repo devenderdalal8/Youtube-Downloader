@@ -1,12 +1,12 @@
 package com.youtube.youtube_downloader.presenter.ui.screen.videoDownloaded
 
-import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,21 +16,30 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
@@ -49,6 +58,7 @@ import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeTypography
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_onPrimaryContainer
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_tertiary
 import com.youtube.youtube_downloader.presenter.ui.theme.font_12
+import com.youtube.youtube_downloader.presenter.ui.theme.gray_100
 import com.youtube.youtube_downloader.presenter.ui.theme.size_0
 import com.youtube.youtube_downloader.presenter.ui.theme.size_16
 import com.youtube.youtube_downloader.presenter.ui.theme.size_24
@@ -58,7 +68,7 @@ import com.youtube.youtube_downloader.presenter.ui.theme.size_8
 import com.youtube.youtube_downloader.presenter.ui.theme.size_80
 import com.youtube.youtube_downloader.presenter.ui.theme.size_84
 
-@SuppressLint("UnspecifiedRegisterReceiverFlag")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoDownloadScreen(
     modifier: Modifier = Modifier,
@@ -68,6 +78,9 @@ fun VideoDownloadScreen(
 ) {
     LaunchedEffect(Unit) {
         viewModel.getAllVideos()
+    }
+    var isAllSelected by remember {
+        mutableStateOf(false)
     }
     when (val result = viewModel.videos.collectAsState().value) {
         is UiState.Error -> {}
@@ -79,16 +92,47 @@ fun VideoDownloadScreen(
 
         is UiState.Success -> {
             val videos = result.data
-            VideoScreen(
-                modifier = modifier, videos = videos as List<Video>,
-                onMoreOptionClick = { position, video ->
-                    onMoreOptionClick(position, video)
-                },
-                viewModel = viewModel,
-                onPlayVideoClickListener = { id ->
-                    onPlayVideoClickListener(id, true)
-                }
-            )
+            Scaffold(topBar = {
+                TopAppBar(
+                    title = {
+                        Text("Downloads")
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = { viewModel.deleteAllVideo() },
+                            modifier = Modifier.alpha(
+                                if (isAllSelected) 1f else 0f
+                            ),
+                            ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete",
+                            )
+                        }
+                        Checkbox(
+                            checked = isAllSelected,
+                            onCheckedChange = { isAllSelected = it },
+                        )
+
+                    },
+                    windowInsets = WindowInsets(left = size_16, right = size_16),
+                    colors = topAppBarColors(containerColor = gray_100)
+
+                )
+            }) { padding ->
+                VideoScreen(
+                    modifier = modifier.padding(padding),
+                    videos = videos as List<Video>,
+                    viewModel = viewModel,
+                    isAllSelected = isAllSelected,
+                    onMoreOptionClick = { position, video ->
+                        onMoreOptionClick(position, video)
+                    },
+                    onPlayVideoClickListener = { id ->
+                        onPlayVideoClickListener(id, true)
+                    }
+                )
+            }
         }
 
         else -> {}
@@ -101,14 +145,16 @@ fun VideoScreen(
     videos: List<Video>,
     viewModel: VideoDownloadViewModel,
     onMoreOptionClick: (Int, Video) -> Unit,
-    onPlayVideoClickListener: (String) -> Unit
+    onPlayVideoClickListener: (String) -> Unit,
+    isAllSelected: Boolean
 ) {
-    LazyColumn {
+    LazyColumn(modifier) {
         itemsIndexed(videos) { index, video ->
             VideoItemView(
-                modifier = modifier,
+                modifier = Modifier,
                 video = video,
                 viewModel = viewModel,
+                isAllSelected = isAllSelected,
                 onMoreOptionClick = { onMoreOptionClick(index, video) },
                 onPlayVideoClickListener = {
                     onPlayVideoClickListener(it)
@@ -124,12 +170,9 @@ fun VideoItemView(
     video: Video,
     viewModel: VideoDownloadViewModel,
     onMoreOptionClick: () -> Unit,
-    onPlayVideoClickListener: (String) -> Unit
+    onPlayVideoClickListener: (String) -> Unit,
+    isAllSelected: Boolean
 ) {
-    val downloadState = remember {
-        mutableStateOf(video.state)
-    }
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -155,22 +198,17 @@ fun VideoItemView(
                 ShowPlayPauseIcon(
                     modifier = modifier,
                     state = video.state
-                ) {
-                    when (downloadState.value) {
+                ) { downloadState ->
+                    when (downloadState) {
                         DownloadState.PAUSED -> {
-                            downloadState.value = DownloadState.DOWNLOADING // Update the state
                             viewModel.resumeDownload(video = video)
                         }
 
                         DownloadState.DOWNLOADING -> {
-                            downloadState.value = DownloadState.PAUSED // Update the state
-                            viewModel.pauseVideoService(
-                                video = video
-                            )
+                            viewModel.pauseVideoService(video = video)
                         }
 
                         DownloadState.FAILED, DownloadState.PENDING -> {
-                            downloadState.value = DownloadState.DOWNLOADING // Update the state
                             viewModel.resumeDownload(video = video)
                         }
 

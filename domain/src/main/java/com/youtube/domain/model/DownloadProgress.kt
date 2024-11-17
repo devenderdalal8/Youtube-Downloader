@@ -9,7 +9,7 @@ data class DownloadProgress(
     var totalMegaBytes: String = "0",
     var bytesDownloaded: Long = 0L,
     var totalBytes: Long = 0L,
-    var uri: String = Uri.EMPTY.toString()
+    var uri: String? = null
 ) {
     companion object {
         val EMPTY: DownloadProgress
@@ -20,7 +20,7 @@ data class DownloadProgress(
                 totalMegaBytes = "0",
                 bytesDownloaded = 0L,
                 totalBytes = 0L,
-                uri = Uri.EMPTY.toString()
+                uri = null
             )
     }
 

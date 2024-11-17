@@ -16,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
@@ -37,6 +36,10 @@ class VideoDownloadViewModel @Inject constructor(
 
     private val _videoUpdates = MutableSharedFlow<Video>(replay = 1)
     val videoUpdates = _videoUpdates
+
+    companion object {
+        private val TAG = VideoDownloadViewModel::class.java.simpleName
+    }
 
     init {
         getAllVideos()
@@ -59,7 +62,7 @@ class VideoDownloadViewModel @Inject constructor(
                     allVideos.clear()
                     allVideos.addAll(video)
                     _videos.value = UiState.Success(video)
-                    Log.i("TAG", "getAllVideos: $video")
+                    Log.i(TAG, "getAllVideos: $video")
                 }
             } catch (e: Exception) {
                 _videos.update { UiState.Error(e.message.toString()) }
@@ -67,11 +70,20 @@ class VideoDownloadViewModel @Inject constructor(
         }
     }
 
+    fun deleteAllVideo() {
+        viewModelScope.launch {
+            allVideos.forEach { video: Video ->
+                localDataRepository.delete(video = video)
+            }
+            allVideos.clear()
+        }
+    }
+
     fun resumeDownload(video: Video) {
         viewModelScope.launch(Dispatchers.IO) {
-            downloadWorkerRepository.pauseDownload()
             pauseAllDownloads()
-            if (video.selectedVideoUrl.toString().isUrlExpired()) {
+            downloadWorkerRepository.pauseDownload()
+            if (video.selectedVideoUrl.isUrlExpired()) {
                 updateExpireUrl(
                     video.baseUrl.toString(),
                     video.selectedResolution.toString(),
@@ -80,13 +92,7 @@ class VideoDownloadViewModel @Inject constructor(
             } else {
                 val videoById = async { localDataRepository.videoById(video.id.toString()) }.await()
                 val workId = downloadWorkerRepository.startDownload(video = videoById)
-                val updatedVideo = video.copy(workId = workId)
-                updateVideo(
-                    video = videoById,
-                    newState = DownloadState.DOWNLOADING,
-                    url = videoById.selectedVideoUrl.toString(),
-                )
-                localDataRepository.update(updatedVideo)
+                workId.toString()
             }
         }
     }
@@ -108,33 +114,25 @@ class VideoDownloadViewModel @Inject constructor(
             }.await()
             when (url) {
                 is Resource.Error -> {
-                    Log.e("TAG", "updateExpireUrl: ${url.message.toString()}")
+                    Log.e(TAG, "updateExpireUrl: ${url.message.toString()}")
                 }
 
                 is Resource.Loading -> {}
                 is Resource.Success -> {
                     val video = async { localDataRepository.videoById(id) }.await()
-                    val workId = downloadWorkerRepository.startDownload(video = video)
-                    val updatedVideo = video.copy(workId = workId)
-                    updateVideo(
-                        video = updatedVideo,
-                        newState = DownloadState.DOWNLOADING,
-                        url = url.data.toString()
-                    )
+                    downloadWorkerRepository.startDownload(video = video.copy(selectedVideoUrl = url.data.toString()))
                 }
             }
         }
     }
 
-    private fun updateVideo(video: Video, newState: DownloadState, url: String) {
+    private fun updateVideo(video: Video, state: DownloadState, url: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val updatedVideo = video.copy(
-                state = newState,
+                state = state,
                 selectedVideoUrl = url
             )
             localDataRepository.update(updatedVideo)
-            allVideos.replaceAll { if (it.id == updatedVideo.id) updatedVideo else it }
-            _videos.update { UiState.Success(allVideos.toList()) }
         }
     }
 

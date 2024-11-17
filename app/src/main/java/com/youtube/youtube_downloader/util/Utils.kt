@@ -80,7 +80,7 @@ fun String.getTimeDifference() :String{
     return this.substring(0 , 10).split("-").reversed().joinToString("/")
 }
 
-fun String.isUrlExpired(): Boolean {
+fun String?.isUrlExpired(): Boolean {
     val url = URL(this)
     val queryParams = url.query.split("&")
     val expireParam = queryParams.find { it.startsWith("expire=") }

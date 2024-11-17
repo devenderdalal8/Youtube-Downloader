@@ -23,12 +23,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,7 +45,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.youtube.domain.model.Video
-import com.youtube.domain.model.VideoDetails
 import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.youtube_downloader.R
 import com.youtube.youtube_downloader.presenter.ui.theme.YoutubeTypography
@@ -52,7 +52,6 @@ import com.youtube.youtube_downloader.presenter.ui.theme.dark_primary
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_primaryContainer
 import com.youtube.youtube_downloader.presenter.ui.theme.dark_selectedBorder
 import com.youtube.youtube_downloader.presenter.ui.theme.font_12
-import com.youtube.youtube_downloader.presenter.ui.theme.font_14
 import com.youtube.youtube_downloader.presenter.ui.theme.font_16
 import com.youtube.youtube_downloader.presenter.ui.theme.gray_10
 import com.youtube.youtube_downloader.presenter.ui.theme.gray_75
@@ -65,7 +64,6 @@ import com.youtube.youtube_downloader.presenter.ui.theme.size_8
 import com.youtube.youtube_downloader.presenter.ui.theme.size_96
 import com.youtube.youtube_downloader.util.Constant
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DownloadBottomSheet(
     modifier: Modifier = Modifier,
@@ -76,12 +74,10 @@ fun DownloadBottomSheet(
 ) {
 
     MainDownloadBottomSheetScreen(
-        modifier = modifier, data = video.resolutionDetails.orEmpty(), video = video
-    ) { url, resolution ->
+        modifier = modifier, data = video.resolution, video = video
+    ) { resolution ->
         if (!viewModel.isVideoAvailable(video.baseUrl.toString())) {
-            val downloadVideo = video.copy(
-                selectedResolution = resolution, selectedVideoUrl = url
-            )
+            val downloadVideo = video.copy(selectedResolution = resolution)
             viewModel.storeVideoLocally(downloadVideo)
             viewModel.startDownload(video = downloadVideo)
         }
@@ -93,16 +89,11 @@ fun DownloadBottomSheet(
 
 @Composable
 fun MainDownloadBottomSheetScreen(
-    modifier: Modifier = Modifier,
-    data: List<VideoDetails>,
-    video: Video,
-    onButtonClickListener: (String, String) -> Unit
+    modifier: Modifier = Modifier, data: List<String>,
+    video: Video, onButtonClickListener: (String) -> Unit
 ) {
     val context = LocalContext.current
-    val videoUrl = remember {
-        mutableStateOf(NOTHING)
-    }
-    val videoResolution = remember {
+    var videoResolution by remember {
         mutableStateOf(NOTHING)
     }
     Box(
@@ -115,14 +106,11 @@ fun MainDownloadBottomSheetScreen(
             Spacer(modifier = modifier.padding(size_8))
             ShowDownloadText(modifier = modifier)
             Spacer(modifier = modifier.padding(size_8))
-            VideoQualities(modifier = modifier, resolutions = data) { url, resolution ->
-                videoUrl.value = url
-                videoResolution.value = resolution
+            VideoQualities(modifier = modifier, resolutions = data) { resolution ->
+                videoResolution = resolution
             }
             DownloadButtonView(modifier = modifier, onButtonClickListener = {
-                onButtonClickListener(
-                    videoUrl.value, videoResolution.value
-                )
+                onButtonClickListener(videoResolution)
             })
             Mp3DownloadButtonView(modifier = modifier, onButtonClickListener = {})
         }
@@ -148,7 +136,7 @@ fun Mp3DownloadButtonView(modifier: Modifier, onButtonClickListener: () -> Unit)
         Text(
             text = Constant.AUDIO, style = YoutubeTypography.titleMedium.copy(
                 fontWeight = FontWeight.W700, fontSize = font_16
-            ), modifier = modifier.padding(size_8)
+            ), modifier = modifier.padding(size_16)
         )
     }
 }
@@ -178,7 +166,7 @@ fun DownloadButtonView(modifier: Modifier, onButtonClickListener: () -> Unit) {
 
 @Composable
 fun VideoQualities(
-    modifier: Modifier, resolutions: List<VideoDetails>, onClickListener: (String, String) -> Unit
+    modifier: Modifier, resolutions: List<String>, onClickListener: (String) -> Unit
 ) {
     val isSelected = remember {
         mutableIntStateOf(-1)
@@ -187,17 +175,18 @@ fun VideoQualities(
         columns = GridCells.Adaptive(minSize = size_96),
         modifier = modifier.padding(horizontal = size_16)
     ) {
-        itemsIndexed(resolutions) { index, video ->
-            ResolutionView(video, isSelected = isSelected.intValue == index, onClickListener = {
+        itemsIndexed(resolutions) { index, resolution ->
+            ResolutionView(
+                resolution, isSelected = isSelected.intValue == index, onClickListener = {
                 isSelected.intValue = index
-                onClickListener(video.url.toString(), video.resolution.toString())
+                    onClickListener(resolution)
             })
         }
     }
 }
 
 @Composable
-fun ResolutionView(resolution: VideoDetails, isSelected: Boolean, onClickListener: () -> Unit) {
+fun ResolutionView(resolution: String, isSelected: Boolean, onClickListener: () -> Unit) {
     Card(
         modifier = Modifier
             .padding(size_8)
@@ -215,27 +204,16 @@ fun ResolutionView(resolution: VideoDetails, isSelected: Boolean, onClickListene
             width = size_2, color = if (isSelected) dark_selectedBorder else Color.Transparent
         ),
     ) {
-        Column {
+        Box(modifier = Modifier, contentAlignment = Alignment.Center) {
             Text(
-                text = resolution.resolution.toString(),
+                text = resolution,
                 style = YoutubeTypography.titleSmall.copy(
                     fontWeight = FontWeight.W700, fontSize = font_16
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = size_16)
-                    .padding(top = size_16, bottom = size_8),
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = resolution.size.toString(),
-                style = YoutubeTypography.titleSmall.copy(
-                    fontWeight = FontWeight.W500,
-                    fontSize = font_14,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = size_8),
+                    .padding(horizontal = size_8, vertical = size_16),
                 textAlign = TextAlign.Center
             )
         }
