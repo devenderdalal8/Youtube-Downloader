@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.youtube.domain.model.Video
+import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
 @Dao
@@ -21,7 +22,7 @@ interface VideoDao {
     suspend fun delete(video: Video)
 
     @Query("SELECT * FROM video_table ")
-    suspend fun getVideos(): List<Video>
+    fun getVideos(): Flow<List<Video>>
 
     @Query("SELECT COUNT(*) FROM video_table WHERE baseUrl = :baseUrl LIMIT 1")
     suspend fun isVideoAvailable(baseUrl: String): Int

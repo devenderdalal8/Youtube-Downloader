@@ -40,7 +40,8 @@ data class Video(
     @SerializedName("notification_id") val notificationId: Int = Random.nextInt(Int.MAX_VALUE),
     @SerializedName("video_type") var videoType: VideoType = VideoType.VIDEO,
     @SerializedName("work_id") var workId: UUID = UUID.randomUUID(),
-    @SerializedName("resolution_details") val resolutionDetails: List<VideoDetails>? = emptyList()
+    @SerializedName("resolution_details") val resolutionDetails: List<VideoDetails>? = emptyList(),
+    @SerializedName("is_selected") var isSelected: Boolean = false
 ) {
     override fun toString(): String {
         return "Video(id=$id, videoId=$videoId, title=$title, baseUrl=$baseUrl, duration=$duration, views='$views', likes=$likes, uploadDate='$uploadDate', channelUrl=$channelUrl, channelId=$channelId, size=$size, length=$length, isDownloaded=$isDownloaded, filePath=$filePath, error=$error, selectedResolution=$selectedResolution, isExpire=$isExpire, downloadProgress=$downloadProgress, state=$state, notificationId=$notificationId, videoType=$videoType, workId=$workId, resolutionDetails=$resolutionDetails)"

@@ -16,6 +16,7 @@ import androidx.work.WorkerParameters
 import com.youtube.data.service.notification.VideoNotificationManager
 import com.youtube.data.util.getFileSize
 import com.youtube.domain.model.DownloadState
+import com.youtube.domain.model.Video
 import com.youtube.domain.repository.VideoLocalDataRepository
 import com.youtube.domain.utils.Constant.BASE_URL
 import com.youtube.domain.utils.Constant.DOWNLOADED_BYTES
@@ -30,7 +31,6 @@ import com.youtube.domain.utils.Constant.NOTHING
 import com.youtube.domain.utils.Constant.PROGRESS_DATA
 import com.youtube.domain.utils.Constant.START_BYTE
 import com.youtube.domain.utils.Constant.TITLE
-import com.youtube.domain.utils.Constant.URI
 import com.youtube.domain.utils.Constant.VIDEO_ID
 import com.youtube.domain.utils.Constant.VIDEO_NOTIFICATION_ID
 import com.youtube.domain.utils.Constant.VIDEO_URL
@@ -57,8 +57,10 @@ class VideoWorkManager @AssistedInject constructor(
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     }
 
+    private var downloadedVideo: Video? = null
     private val updateScope = CoroutineScope(Dispatchers.IO)
     private var updateJob: Job? = null
+    private var downloadBytes: Long = 0L
 
     companion object {
         private val broadcastIntent = Intent()
@@ -121,7 +123,6 @@ class VideoWorkManager @AssistedInject constructor(
                 put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
                 put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             }
-            // Check if the video already exists
             val existingUri = resolver.query(
                 MediaStore.Downloads.EXTERNAL_CONTENT_URI,
                 null,
@@ -187,7 +188,7 @@ class VideoWorkManager @AssistedInject constructor(
                                         fileSize = totalBytes,
                                         baseUrl = baseUrl,
                                         videoId = videoId,
-                                        uri = videoUri
+                                        uri = uri
                                     )
                                     updateProgress(
                                         title = title,
@@ -238,7 +239,6 @@ class VideoWorkManager @AssistedInject constructor(
             broadcastIntent.putExtra(FILE_SIZE, fileSize)
             broadcastIntent.putExtra(BASE_URL, baseUrl)
             broadcastIntent.putExtra(VIDEO_ID, videoId)
-            broadcastIntent.putExtra(URI, uri.toString())
             applicationContext.sendBroadcast(broadcastIntent)
         }
     }
@@ -293,7 +293,7 @@ class VideoWorkManager @AssistedInject constructor(
         updateJob = updateScope.launch {
             val video = localDataRepository.videoByBaseUrl(baseUrl)
             video.copy(
-                state = DownloadState.FAILED
+                state = DownloadState.COMPLETED
             ).also { updatedVideo ->
                 localDataRepository.update(updatedVideo)
             }

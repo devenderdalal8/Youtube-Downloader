@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Youtube Downloader</string>
+    <string name="app_name">Youtube</string>
     <string name="ready_to_save">Video is ready to save</string>
     <string name="select_quality">Select Quality</string>
 </resources>

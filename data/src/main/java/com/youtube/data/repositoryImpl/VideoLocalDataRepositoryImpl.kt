@@ -6,7 +6,6 @@ import com.youtube.domain.model.Video
 import com.youtube.domain.repository.VideoLocalDataRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
@@ -34,11 +33,7 @@ class VideoLocalDataRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getVideos(): Flow<List<Video>> {
-        return withContext(Dispatchers.IO) {
-            flowOf(videoDao.getVideos())
-        }
-    }
+    override suspend fun getVideos(): Flow<List<Video>> = videoDao.getVideos()
 
     override suspend fun isVideoAvailable(baseUrl: String): Boolean {
         return withContext(Dispatchers.IO) {

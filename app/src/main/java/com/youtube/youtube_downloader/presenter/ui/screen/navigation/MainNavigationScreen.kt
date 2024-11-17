@@ -85,9 +85,7 @@ fun MainNavigationScreen(
             }
 
             composable(BottomNavScreen.Home.route) {
-                HomeScreen(
-                    isSearchable = true
-                ) { videoUrl ->
+                HomeScreen { videoUrl ->
                     // when i am searching video from home  screen
                     navController.navigate(
                         "videoPlayer/${
